@@ -1,0 +1,229 @@
+<div class="my-user-container">
+    <!-- Loading state -->
+    <div *ngIf="loading" style="text-align: center; padding: 40px;">
+      <p>Cargando datos del usuario...</p>
+    </div>
+
+    <!-- Error state -->
+    <div *ngIf="errorMessage && !loading" style="text-align: center; color: #a32930; padding: 20px;">
+      <p>{{ errorMessage }}</p>
+      <button (click)="loadUserData()" style="margin-top: 10px;">Reintentar</button>
+    </div>
+
+    <!-- User data -->
+    <div *ngIf="user && !loading">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+          <h2>Perfil de {{ user.role === 'candidato' ? 'Candidato' : user.role === 'empresa' ? 'Empresa' : 'Administrador' }}</h2>
+          <!-- Badge de recruiter para candidatos -->
+          <div *ngIf="user.role === 'candidato' && isRecruiter()" 
+               style="background-color: #007bff; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+            👨‍💼 RECRUITER
+          </div>
+        </div>
+        <button (click)="logout()" style="background-color: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+          Cerrar Sesión
+        </button>
+      </div>
+    
+      <div class="profile-image-wrapper" (click)="triggerFileInput()">
+        <img *ngIf="profileImageUrl; else placeholder" [src]="profileImageUrl" alt="Foto de perfil" />
+        <ng-template #placeholder>
+          <div class="empty-photo">Sin foto</div>
+        </ng-template>
+        <input type="file" (change)="onPhotoSelected($event)" accept="image/*" #photoInput hidden />
+      </div>
+    
+      <!-- Switch solo para candidatos -->
+      <div class="switch-section" *ngIf="user.role === 'candidato'">
+        <label class="switch">
+          <input type="checkbox" [checked]="isLookingForJob" (change)="toggleJobStatus()" />
+          <span class="slider round"></span>
+        </label>
+        <span class="switch-label">Buscando trabajo</span>
+      </div>
+
+      <!-- Estado de verificación para empresas -->
+      <div class="verification-status" *ngIf="user.role === 'empresa'" style="margin-bottom: 20px; text-align: center;">
+        <div *ngIf="user.verified" style="background-color: #d4edda; color: #155724; padding: 10px; border-radius: 6px; border: 1px solid #c3e6cb;">
+          ✅ <strong>Empresa Verificada</strong> - Puedes agregar recruiters
+        </div>
+        <div *ngIf="!user.verified" style="background-color: #fff3cd; color: #856404; padding: 10px; border-radius: 6px; border: 1px solid #ffeaa7;">
+          ⏳ <strong>Verificación Pendiente</strong> - Esperando aprobación de Polo52
+        </div>
+      </div>
+    
+      <div class="user-data">
+        <div *ngIf="!isEditing">
+          <!-- Datos comunes para ambos roles -->
+          <p><strong>Email:</strong> {{ user.email }}</p>
+          <p><strong>Nombre:</strong> {{ user.nombre }}</p>
+          
+          <!-- Datos específicos de CANDIDATOS -->
+          <div *ngIf="user.role === 'candidato'">
+            <p><strong>Apellido:</strong> {{ user.apellido }}</p>
+            <p><strong>Género:</strong> {{ getGenderDisplay(user.genero) }}</p>
+            <p><strong>Fecha de nacimiento:</strong> {{ user.fecha_nacimiento }}</p>
+          </div>
+          
+          <!-- Datos específicos de EMPRESAS -->
+          <div *ngIf="user.role === 'empresa'">
+            <p><strong>Descripción:</strong> {{ user.descripcion }}</p>
+            <p><strong>Estado:</strong> 
+              <span [style.color]="user.verified ? '#28a745' : '#ffc107'">
+                {{ user.verified ? 'Verificada' : 'Pendiente de verificación' }}
+              </span>
+            </p>
+          </div>
+
+          <!-- Datos específicos de ADMIN -->
+          <div *ngIf="user.role === 'admin'">
+            <p><strong>Rol:</strong> Administrador del Sistema</p>
+            <p><strong>Permisos:</strong> Verificar empresas, gestionar usuarios</p>
+          </div>
+        </div>
+    
+        <div *ngIf="isEditing" class="form-edit">
+          <!-- Campos comunes -->
+          <label>Nombre: <input [(ngModel)]="tempUser.nombre" /></label>
+          
+          <!-- Campos específicos de CANDIDATOS -->
+          <div *ngIf="user.role === 'candidato'">
+            <label>Apellido: <input [(ngModel)]="tempUser.apellido" /></label>
+            <label>Género: 
+              <select [(ngModel)]="tempUser.genero">
+                <option value="masculino">Masculino</option>
+                <option value="femenino">Femenino</option>
+                <option value="otro">Otro</option>
+              </select>
+            </label>
+            <label>Fecha de nacimiento: <input type="date" [(ngModel)]="tempUser.fecha_nacimiento" /></label>
+          </div>
+          
+          <!-- Campos específicos de EMPRESAS -->
+          <div *ngIf="user.role === 'empresa'">
+            <label>Descripción: 
+              <textarea [(ngModel)]="tempUser.descripcion" rows="4" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+            </label>
+          </div>
+        </div>
+      </div>
+    
+      <!-- CV Section - Solo para candidatos -->
+      <div class="cv-section" *ngIf="user.role === 'candidato'">
+        <p><strong>Currículum:</strong></p>
+        
+        <div class="cv-card">
+          <div class="cv-info">
+            <div class="cv-icon">
+              📄
+            </div>
+            <div class="cv-details">
+              <p class="cv-name">Curriculum Vitae</p>
+              <p class="cv-filename">{{ tempCvFile ? tempCvFile.name : getDisplayCvName() }}</p>
+            </div>
+          </div>
+          
+          <div class="cv-actions">
+            <button class="cv-btn download-btn" (click)="downloadCV()" title="Descargar CV">
+              ⬇️ Descargar
+            </button>
+            <button *ngIf="isEditing" class="cv-btn upload-btn" (click)="triggerCvUpload()">
+              📎 Cambiar CV
+            </button>
+          </div>
+        </div>
+        
+        <input type="file" accept="application/pdf" #cvInput (change)="onCvSelected($event)" hidden />
+      </div>
+
+      <!-- Sección Mis Recruiters - Solo para empresas verificadas -->
+      <div class="recruiters-section" *ngIf="user.role === 'empresa' && user.verified" style="margin-top: 30px;">
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; background-color: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e0e0e0;" (click)="toggleRecruiters()">
+          <h3 style="margin: 0; color: #333;">👥 Mis Recruiters ({{ recruiters.length }})</h3>
+          <span style="font-size: 18px; transition: transform 0.3s ease;" [style.transform]="showRecruiters ? 'rotate(180deg)' : 'rotate(0deg)'">▼</span>
+        </div>
+        
+        <div *ngIf="showRecruiters" style="margin-top: 15px; padding: 15px; background-color: #f9f9f9; border-radius: 6px;">
+          <!-- Agregar nuevo recruiter -->
+          <div style="margin-bottom: 20px; padding: 15px; background-color: white; border-radius: 6px; border: 1px solid #e0e0e0;">
+            <h4 style="margin-top: 0; color: #007bff;">➕ Agregar Recruiter</h4>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <input 
+                type="email" 
+                [(ngModel)]="newRecruiterEmail" 
+                placeholder="Email del candidato"
+                style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+              <button 
+                (click)="addRecruiter()" 
+                [disabled]="!newRecruiterEmail.trim()"
+                style="background-color: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                Agregar
+              </button>
+            </div>
+          </div>
+
+          <!-- Lista de recruiters -->
+          <div *ngIf="loadingRecruiters" style="text-align: center; padding: 20px; color: #666;">
+            Cargando recruiters...
+          </div>
+
+          <div *ngIf="!loadingRecruiters && recruiters.length === 0" style="text-align: center; padding: 20px; color: #666;">
+            No tienes recruiters asignados aún.
+          </div>
+
+          <div *ngFor="let recruiter of recruiters" style="background-color: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h4 style="margin: 0 0 5px 0; color: #333;">{{ recruiter.nombre }} {{ recruiter.apellido }}</h4>
+                <p style="margin: 0; color: #666; font-size: 14px;">📧 {{ recruiter.email }}</p>
+                <p style="margin: 5px 0 0 0; color: #999; font-size: 12px;">Asignado: {{ recruiter.assigned_at | date:'short' }}</p>
+              </div>
+              <button 
+                (click)="removeRecruiter(recruiter.email)"
+                style="background-color: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                Remover
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección Reclutando Para - Solo para candidatos que son recruiters -->
+      <div class="recruiting-for-section" *ngIf="user.role === 'candidato' && isRecruiter()" style="margin-top: 30px;">
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; background-color: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e0e0e0;" (click)="toggleRecruitingFor()">
+          <h3 style="margin: 0; color: #333;">🏢 Reclutando Para ({{ recruitingCompanies.length }})</h3>
+          <span style="font-size: 18px; transition: transform 0.3s ease;" [style.transform]="showRecruitingFor ? 'rotate(180deg)' : 'rotate(0deg)'">▼</span>
+        </div>
+        
+        <div *ngIf="showRecruitingFor" style="margin-top: 15px; padding: 15px; background-color: #f9f9f9; border-radius: 6px;">
+          <div *ngFor="let company of recruitingCompanies" style="background-color: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="background-color: #007bff; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                {{ company.verified ? '✅ VERIFICADA' : '⏳ PENDIENTE' }}
+              </div>
+            </div>
+            <h4 style="margin: 10px 0 5px 0; color: #333;">{{ company.nombre }}</h4>
+            <p style="margin: 0; color: #666; font-size: 14px;">📧 {{ company.email }}</p>
+            <p style="margin: 5px 0 0 0; color: #777; font-size: 13px;">{{ company.descripcion }}</p>
+            <p style="margin: 5px 0 0 0; color: #999; font-size: 12px;">Asignado como recruiter: {{ company.assigned_at | date:'short' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mostrar mensaje de error si existe -->
+      <div *ngIf="errorMessage && !loading" style="color: #a32930; text-align: center; margin: 15px 0; font-weight: 600;">
+        {{ errorMessage }}
+      </div>
+    
+      <div class="edit-buttons">
+        <button *ngIf="!isEditing && user.role !== 'admin'" (click)="enableEdit()">Editar</button>
+        <div *ngIf="isEditing">
+          <button (click)="saveChanges()" [disabled]="saving">
+            {{ saving ? 'Guardando...' : 'Guardar Cambios' }}
+          </button>
+          <button (click)="discardChanges()" [disabled]="saving">Descartar Cambios</button>
+        </div>
+      </div>
+    </div>
+  </div>

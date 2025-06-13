@@ -1,0 +1,157 @@
+<div class="user-config-form-container">
+    <h2>Registro de Usuario</h2>
+  
+    <form (ngSubmit)="onSubmit()" #userForm="ngForm" novalidate>
+  
+      <!-- Selector de tipo de usuario -->
+      <div class="user-type-selector">
+        <p><strong>¿Cómo te quieres registrar?</strong></p>
+        <div class="type-buttons">
+          <button 
+            type="button"
+            class="type-btn"
+            [class.active]="userType === 'candidato'"
+            (click)="onUserTypeChange('candidato')">
+            👤 Candidato
+          </button>
+          <button 
+            type="button"
+            class="type-btn"
+            [class.active]="userType === 'empresa'"
+            (click)="onUserTypeChange('empresa')">
+            🏢 Empresa
+          </button>
+        </div>
+      </div>
+
+      <!-- Campos comunes -->
+      <div class="form-row">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          [(ngModel)]="commonData.email"
+          required
+          email />
+        <p class="error" *ngIf="commonData.email && !isValidEmail(commonData.email)">
+          Ingrese un email válido.
+        </p>
+      </div>
+
+      <div class="form-row">
+        <label for="password">Contraseña</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="commonData.password"
+          required
+          minlength="6" />
+        <p class="error" *ngIf="commonData.password && commonData.password.length < 6">
+          La contraseña debe tener al menos 6 caracteres.
+        </p>
+      </div>
+
+      <div class="form-row">
+        <label for="confirmPassword">Confirmar Contraseña</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          name="confirmPassword"
+          [(ngModel)]="commonData.confirmPassword"
+          required />
+        <p class="error" *ngIf="commonData.confirmPassword && !passwordsMatch()">
+          Las contraseñas no coinciden.
+        </p>
+      </div>
+
+      <div class="form-row">
+        <label for="nombre">Nombre {{ userType === 'empresa' ? 'de la Empresa' : '' }}</label>
+        <input
+          id="nombre"
+          name="nombre"
+          [(ngModel)]="commonData.nombre"
+          required />
+      </div>
+
+      <!-- Campos específicos de CANDIDATOS -->
+      <div *ngIf="userType === 'candidato'">
+        <div class="form-row">
+          <label for="apellido">Apellido</label>
+          <input
+            id="apellido"
+            name="apellido"
+            [(ngModel)]="candidatoData.apellido"
+            required
+            (keypress)="preventInvalidChars($event)"
+            (input)="sanitizeName('apellido')" />
+          <p class="error" *ngIf="candidatoData.apellido && hasInvalidChars(candidatoData.apellido)">
+            Solo se permiten letras y espacios.
+          </p>
+        </div>
+  
+        <div class="form-row">
+          <label for="gender">Género</label>
+          <select id="gender" name="gender" [(ngModel)]="candidatoData.gender" required>
+            <option value="" disabled selected>Seleccione</option>
+            <option value="masculino">Masculino</option>
+            <option value="femenino">Femenino</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+  
+        <div class="form-row">
+          <label for="birthDate">Fecha de Nacimiento</label>
+          <input
+            type="date"
+            id="birthDate"
+            name="birthDate"
+            [(ngModel)]="candidatoData.birthDate"
+            required
+            (change)="checkAge()" />
+          <p class="error" *ngIf="birthDateError">Debés tener al menos 18 años.</p>
+        </div>
+  
+        <div class="form-row">
+          <label for="cv">Cargar CV (PDF)</label>
+          <input
+            type="file"
+            id="cv"
+            name="cv"
+            (change)="onFileSelected($event)"
+            accept="application/pdf"
+            required />
+          <p class="error" *ngIf="cvError">Solo se permite un archivo PDF.</p>
+        </div>
+      </div>
+
+      <!-- Campos específicos de EMPRESAS -->
+      <div *ngIf="userType === 'empresa'">
+        <div class="form-row">
+          <label for="descripcion">Descripción de la Empresa</label>
+          <textarea
+            id="descripcion"
+            name="descripcion"
+            [(ngModel)]="empresaData.descripcion"
+            required
+            rows="4"
+            placeholder="Describe tu empresa, servicios, sector, etc."></textarea>
+          <p class="error" *ngIf="!empresaData.descripcion && userForm.submitted">
+            La descripción es requerida.
+          </p>
+        </div>
+      </div>
+  
+      <button
+        type="submit"
+        [disabled]="!isFormValid() || loading">
+        {{ loading ? 'Registrando...' : 'Registrarse' }}
+      </button>
+
+      <!-- Mostrar mensaje de error si existe -->
+      <div *ngIf="errorMessage" class="error" style="text-align: center; margin-top: 15px; font-weight: 600;">
+        {{ errorMessage }}
+      </div>
+    </form>
+  </div>

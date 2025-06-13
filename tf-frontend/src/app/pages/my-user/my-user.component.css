@@ -1,0 +1,252 @@
+.my-user-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 24px;
+    background-color: #f9f9f9;
+    border-radius: 12px;
+    font-family: 'Manrope', sans-serif;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .profile-image-wrapper {
+    width: 150px;
+    height: 150px;
+    border: 3px solid #a32930;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+  }
+  
+  .profile-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .empty-photo {
+    font-size: 0.9rem;
+    color: #999;
+    text-align: center;
+  }
+  
+  .switch-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 10px;
+  }
+  
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+  }
+  
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0;
+    right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+  }
+  
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 4px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+  }
+  
+  input:checked + .slider {
+    background-color: #a32930;
+  }
+  
+  input:checked + .slider:before {
+    transform: translateX(22px);
+  }
+  
+  .switch-label {
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .user-data p {
+    margin: 6px 0;
+  }
+  
+  .form-edit label {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+  }
+  
+  .form-edit input, .form-edit select {
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+  
+  .cv-section {
+    margin-top: 24px;
+    text-align: left;
+  }
+  
+  .cv-filename {
+    margin-bottom: 8px;
+    font-style: italic;
+    color: #444;
+  }
+  
+  .cv-btn {
+    background-color: #a32930;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
+  .edit-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 20px;
+  }
+  
+  .edit-buttons button {
+    background-color: #a32930;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    margin: 0 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
+
+  /* CV Section mejorada - Agregar al final del archivo CSS existente */
+.cv-section {
+  margin-top: 24px;
+  text-align: left;
+}
+
+.cv-card {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.cv-card:hover {
+  border-color: #a32930;
+  box-shadow: 0 4px 12px rgba(163, 41, 48, 0.15);
+}
+
+.cv-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.cv-icon {
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e0e0e0;
+}
+
+.cv-details {
+  flex: 1;
+}
+
+.cv-name {
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 4px 0;
+  font-size: 14px;
+}
+
+.cv-filename {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+  background: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
+  font-family: 'Courier New', monospace;
+}
+
+.cv-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cv-btn {
+  background-color: #a32930;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cv-btn:hover {
+  background-color: #871e25;
+  transform: translateY(-1px);
+}
+
+.download-btn {
+  background-color: #28a745;
+}
+
+.download-btn:hover {
+  background-color: #1e7e34;
+}
+
+.upload-btn {
+  background-color: #6c757d;
+}
+
+.upload-btn:hover {
+  background-color: #545b62;
+}

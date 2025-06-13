@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap');
+
+:host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-family: 'Manrope', sans-serif;
+  background-color: #f8f8f8;
+  color: #333;
+}
+
+.user-config-form-container {
+  background: white;
+  padding: 50px 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 420px;
+}
+
+.user-config-form-container h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.form-row label {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.form-row input,
+.form-row select {
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-family: 'Manrope', sans-serif;
+}
+
+input[type="file"] {
+  padding: 6px;
+}
+
+button {
+  background-color: #A32930;
+  color: white;
+  border: none;
+  padding: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #871e25;
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #A32930;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+/* Selector de tipo de usuario */
+.user-type-selector {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.user-type-selector p {
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 16px;
+}
+
+.type-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.type-btn {
+  background-color: #f8f8f8;
+  color: #666;
+  border: 2px solid #ddd;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+  justify-content: center;
+}
+
+.type-btn:hover {
+  background-color: #f0f0f0;
+  border-color: #A32930;
+  transform: translateY(-1px);
+}
+
+.type-btn.active {
+  background-color: #A32930;
+  color: white;
+  border-color: #A32930;
+  box-shadow: 0 4px 12px rgba(163, 41, 48, 0.3);
+}
+
+/* Textarea específico para empresas */
+textarea {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-family: 'Manrope', sans-serif;
+  resize: vertical;
+  min-height: 100px;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: #A32930;
+  box-shadow: 0 0 5px rgba(163, 41, 48, 0.2);
+}
+
+/* Animaciones suaves para cambio de formulario */
+.form-row {
+  transition: all 0.3s ease;
+}
