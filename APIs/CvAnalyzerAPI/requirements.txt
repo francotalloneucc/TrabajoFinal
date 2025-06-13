@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+python-dotenv
+PyMuPDF==1.23.7
+pytesseract
+Pillow
+google-generativeai==0.4.1
+requests
