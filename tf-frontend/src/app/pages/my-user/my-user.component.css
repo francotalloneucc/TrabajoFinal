@@ -20,6 +20,7 @@
     align-items: center;
     justify-content: center;
     background: #fff;
+    position: relative; /* Para el overlay */
   }
   
   .profile-image-wrapper img {
@@ -32,6 +33,44 @@
     font-size: 0.9rem;
     color: #999;
     text-align: center;
+    padding: 20px;
+  }
+
+  .profile-image-wrapper.editable {
+    border-color: #a32930;
+  }
+
+  .profile-image-wrapper.editable:hover {
+    border-color: #871e25;
+    transform: scale(1.02);
+    transition: all 0.3s ease;
+  }
+
+  .edit-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(163, 41, 48, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 50%;
+    font-weight: 600;
+  }
+
+  .profile-image-wrapper.editable:hover .edit-overlay {
+    opacity: 1;
+  }
+
+  .profile-image-wrapper.editable .empty-photo {
+    color: #a32930;
+    font-weight: 600;
   }
   
   .switch-section {
@@ -111,19 +150,108 @@
     text-align: left;
   }
   
+  .cv-card {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .cv-card:hover {
+    border-color: #a32930;
+    box-shadow: 0 4px 12px rgba(163, 41, 48, 0.15);
+  }
+  
+  .cv-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+  }
+  
+  .cv-icon {
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e0e0e0;
+  }
+  
+  .cv-details {
+    flex: 1;
+  }
+  
+  .cv-name {
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 4px 0;
+    font-size: 14px;
+  }
+  
   .cv-filename {
-    margin-bottom: 8px;
-    font-style: italic;
-    color: #444;
+    margin: 0;
+    font-size: 12px;
+    color: #666;
+    background: #f8f9fa;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    font-family: 'Courier New', monospace;
+  }
+  
+  .cv-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
   }
   
   .cv-btn {
-    background-color: #a32930;
-    color: white;
     border: none;
-    padding: 8px 16px;
+    padding: 8px 12px;
     border-radius: 6px;
     cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .cv-btn:hover {
+    transform: translateY(-1px);
+  }
+  
+  /* Botón de descarga - CAMBIADO A BLANCO */
+  .download-btn {
+    background-color: white;
+    color: #333;
+    border: 2px solid #e0e0e0;
+  }
+  
+  .download-btn:hover {
+    background-color: #f8f9fa;
+    border-color: #a32930;
+    color: #a32930;
+  }
+  
+  .upload-btn {
+    background-color: #6c757d;
+    color: white;
+  }
+  
+  .upload-btn:hover {
+    background-color: #545b62;
   }
   
   .edit-buttons {
@@ -142,161 +270,85 @@
     border-radius: 6px;
     cursor: pointer;
   }
-  
 
-  /* CV Section mejorada - Agregar al final del archivo CSS existente */
-.cv-section {
-  margin-top: 24px;
-  text-align: left;
-}
+  /* Estilos para secciones más sobrios */
+  .recruiter-add-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: white;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+  }
 
-.cv-card {
-  background: white;
-  border: 2px solid #e0e0e0;
-  border-radius: 12px;
-  padding: 16px;
-  margin-top: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
+  .recruiter-add-title {
+    margin-top: 0;
+    color: #333;
+    font-weight: 600;
+  }
 
-.cv-card:hover {
-  border-color: #a32930;
-  box-shadow: 0 4px 12px rgba(163, 41, 48, 0.15);
-}
+  .recruiter-add-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
 
-.cv-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-}
+  .recruiter-email-input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
 
-.cv-icon {
-  font-size: 24px;
-  width: 40px;
-  height: 40px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #e0e0e0;
-}
+  /* Botón de agregar recruiter - CAMBIADO A BLANCO */
+  .add-recruiter-btn {
+    background-color: white;
+    color: #333;
+    border: 2px solid #e0e0e0;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
 
-.cv-details {
-  flex: 1;
-}
+  .add-recruiter-btn:hover {
+    background-color: #f8f9fa;
+    border-color: #a32930;
+    color: #a32930;
+  }
 
-.cv-name {
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 4px 0;
-  font-size: 14px;
-}
+  .add-recruiter-btn:disabled {
+    background-color: #f8f9fa;
+    color: #999;
+    border-color: #e0e0e0;
+    cursor: not-allowed;
+  }
 
-.cv-filename {
-  margin: 0;
-  font-size: 12px;
-  color: #666;
-  background: #f8f9fa;
-  padding: 4px 8px;
-  border-radius: 6px;
-  display: inline-block;
-  font-family: 'Courier New', monospace;
-}
+  /* Botones estándar del sistema */
+  .btn-standard {
+    background-color: white;
+    color: #333;
+    border: 2px solid #e0e0e0;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
 
-.cv-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
+  .btn-standard:hover {
+    background-color: #f8f9fa;
+    border-color: #a32930;
+    color: #a32930;
+  }
 
-.cv-btn {
-  background-color: #a32930;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
+  .btn-danger {
+    background-color: #dc3545;
+    color: white;
+    border: 2px solid #dc3545;
+  }
 
-.cv-btn:hover {
-  background-color: #871e25;
-  transform: translateY(-1px);
-}
-
-.download-btn {
-  background-color: #28a745;
-}
-
-.download-btn:hover {
-  background-color: #1e7e34;
-}
-
-.upload-btn {
-  background-color: #6c757d;
-}
-
-.upload-btn:hover {
-  background-color: #545b62;
-}
-
-/* Agregar estos estilos al final de tu my-user.component.css */
-
-.profile-image-wrapper {
-  position: relative; /* Importante para el overlay */
-}
-
-.profile-image-wrapper.editable {
-  border-color: #007bff; /* Cambiar color del borde cuando es editable */
-}
-
-.profile-image-wrapper.editable:hover {
-  border-color: #0056b3;
-  transform: scale(1.02);
-  transition: all 0.3s ease;
-}
-
-.edit-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 123, 255, 0.8);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  border-radius: 50%;
-  font-weight: 600;
-}
-
-.profile-image-wrapper.editable:hover .edit-overlay {
-  opacity: 1;
-}
-
-.empty-photo {
-  padding: 20px;
-  font-size: 0.9rem;
-  color: #999;
-  text-align: center;
-}
-
-.profile-image-wrapper.editable .empty-photo {
-  color: #007bff;
-  font-weight: 600;
-}
+  .btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+  }

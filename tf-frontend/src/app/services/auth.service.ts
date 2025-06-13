@@ -8,7 +8,7 @@ export interface User {
   nombre: string;
   role: 'candidato' | 'empresa' | 'admin';
   verified: boolean;
-  profile_picture?: string; // NUEVO: Campo para foto de perfil
+  profile_picture?: string;
   // Campos opcionales según el rol
   apellido?: string;
   genero?: 'masculino' | 'femenino' | 'otro';
@@ -62,7 +62,7 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
-  // Registro de candidatos - ACTUALIZADO
+  // Registro de candidatos
   registerCandidato(userData: CandidatoRequest, cvFile: File, profilePicture?: File): Observable<User> {
     const formData = new FormData();
     formData.append('email', userData.email);
@@ -72,24 +72,24 @@ export class AuthService {
     formData.append('genero', userData.genero);
     formData.append('fecha_nacimiento', userData.fecha_nacimiento);
     formData.append('cv_file', cvFile);
-    if (profilePicture) formData.append('profile_picture', profilePicture); // NUEVO
+    if (profilePicture) formData.append('profile_picture', profilePicture);
 
     return this.http.post<User>(`${this.baseUrl}/register-candidato`, formData);
   }
 
-  // Registro de empresas - ACTUALIZADO
+  // Registro de empresas
   registerEmpresa(userData: EmpresaRequest, profilePicture?: File): Observable<User> {
     const formData = new FormData();
     formData.append('email', userData.email);
     formData.append('password', userData.password);
     formData.append('nombre', userData.nombre);
     formData.append('descripcion', userData.descripcion);
-    if (profilePicture) formData.append('profile_picture', profilePicture); // NUEVO
+    if (profilePicture) formData.append('profile_picture', profilePicture);
 
     return this.http.post<User>(`${this.baseUrl}/register-empresa`, formData);
   }
 
-  // Mantener método anterior para compatibilidad - ACTUALIZADO
+  // Mantener método anterior para compatibilidad
   register(userData: RegisterRequest, cvFile: File, profilePicture?: File): Observable<User> {
     return this.registerCandidato(userData, cvFile, profilePicture);
   }
@@ -107,7 +107,7 @@ export class AuthService {
     return this.http.get<User>(`${this.baseUrl}/me`, { headers });
   }
 
-  // Actualizar candidato - ACTUALIZADO
+  // Actualizar candidato
   updateCurrentCandidato(userData: Partial<CandidatoRequest>, cvFile?: File, profilePicture?: File): Observable<User> {
     const token = this.getToken();
     
@@ -117,7 +117,7 @@ export class AuthService {
     if (userData.genero) formData.append('genero', userData.genero);
     if (userData.fecha_nacimiento) formData.append('fecha_nacimiento', userData.fecha_nacimiento);
     if (cvFile) formData.append('cv_file', cvFile);
-    if (profilePicture) formData.append('profile_picture', profilePicture); // NUEVO
+    if (profilePicture) formData.append('profile_picture', profilePicture);
 
     return this.http.put<User>(`${this.baseUrl}/me/candidato`, formData, {
       headers: {
@@ -126,14 +126,14 @@ export class AuthService {
     });
   }
 
-  // Actualizar empresa - ACTUALIZADO
+  // Actualizar empresa
   updateCurrentEmpresa(userData: Partial<EmpresaRequest>, profilePicture?: File): Observable<User> {
     const token = this.getToken();
     
     const formData = new FormData();
     if (userData.nombre) formData.append('nombre', userData.nombre);
     if (userData.descripcion) formData.append('descripcion', userData.descripcion);
-    if (profilePicture) formData.append('profile_picture', profilePicture); // NUEVO
+    if (profilePicture) formData.append('profile_picture', profilePicture);
 
     return this.http.put<User>(`${this.baseUrl}/me/empresa`, formData, {
       headers: {
@@ -142,7 +142,7 @@ export class AuthService {
     });
   }
 
-  // Mantener método anterior para compatibilidad - ACTUALIZADO
+  // Mantener método anterior para compatibilidad
   updateCurrentUser(userData: Partial<RegisterRequest>, cvFile?: File, profilePicture?: File): Observable<User> {
     return this.updateCurrentCandidato(userData, cvFile, profilePicture);
   }
@@ -192,26 +192,65 @@ export class AuthService {
 
   addRecruiter(recruiterEmail: string): Observable<any> {
     const token = this.getToken();
-    const formData = new FormData();
-    formData.append('recruiter_email', recruiterEmail);
     
-    return this.http.post(`${this.baseUrl}/companies/add-recruiter`, formData, {
+    return this.http.post(
+      `${this.baseUrl}/companies/add-recruiter?recruiter_email=${encodeURIComponent(recruiterEmail)}`, 
+      {},
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+  }
+
+  removeRecruiter(recruiterEmail: string): Observable<any> {
+    const token = this.getToken();
+    
+    return this.http.delete(
+      `${this.baseUrl}/companies/remove-recruiter?recruiter_email=${encodeURIComponent(recruiterEmail)}`, 
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+  }
+
+  // Métodos para administradores - NUEVOS
+  
+  // Obtener empresas pendientes de verificación
+  getPendingCompanies(): Observable<User[]> {
+    const token = this.getToken();
+    return this.http.get<User[]>(`${this.baseUrl}/admin/companies/pending`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
     });
   }
 
-  removeRecruiter(recruiterEmail: string): Observable<any> {
+  // Verificar empresa (método simple)
+  verifyCompany(companyEmail: string): Observable<any> {
     const token = this.getToken();
-    const formData = new FormData();
-    formData.append('recruiter_email', recruiterEmail);
     
-    return this.http.delete(`${this.baseUrl}/companies/remove-recruiter`, {
+    return this.http.post(
+      `${this.baseUrl}/admin/companies/verify?company_email=${encodeURIComponent(companyEmail)}`,
+      {},
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+  }
+
+  // Obtener todos los usuarios (solo admins)
+  getAllUsers(skip: number = 0, limit: number = 100): Observable<User[]> {
+    const token = this.getToken();
+    return this.http.get<User[]>(`${this.baseUrl}/admin/users?skip=${skip}&limit=${limit}`, {
       headers: {
         'Authorization': `Bearer ${token}`
-      },
-      body: formData
+      }
     });
   }
 }

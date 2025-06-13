@@ -20,13 +20,18 @@
                style="background-color: #007bff; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">
             👨‍💼 RECRUITER
           </div>
+          <!-- Badge de admin -->
+          <div *ngIf="user.role === 'admin'" 
+               style="background-color: #dc3545; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+            🛡️ ADMIN
+          </div>
         </div>
         <button (click)="logout()" style="background-color: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
           Cerrar Sesión
         </button>
       </div>
     
-      <!-- Foto de perfil - ACTUALIZADA -->
+      <!-- Foto de perfil -->
       <div class="profile-image-wrapper" 
            [class.editable]="isEditing" 
            [style.cursor]="isEditing ? 'pointer' : 'default'"
@@ -136,6 +141,7 @@
           </div>
           
           <div class="cv-actions">
+            <!-- Botón de descarga - CAMBIADO A BLANCO -->
             <button class="cv-btn download-btn" (click)="downloadCV()" title="Descargar CV">
               ⬇️ Descargar
             </button>
@@ -148,6 +154,54 @@
         <input type="file" accept="application/pdf" #cvInput (change)="onCvSelected($event)" hidden />
       </div>
 
+      <!-- Sección Admin - Solo para administradores -->
+      <div class="admin-section" *ngIf="user.role === 'admin'" style="margin-top: 30px;">
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; background-color: #dc3545; color: white; padding: 12px; border-radius: 6px;" (click)="toggleAdminPanel()">
+          <h3 style="margin: 0; color: white;">🛡️ Panel de Administración</h3>
+          <span style="font-size: 18px; transition: transform 0.3s ease;" [style.transform]="showAdminPanel ? 'rotate(180deg)' : 'rotate(0deg)'">▼</span>
+        </div>
+        
+        <div *ngIf="showAdminPanel" style="margin-top: 15px; padding: 15px; background-color: #f9f9f9; border-radius: 6px;">
+          
+          <!-- Empresas pendientes de verificación -->
+          <div style="margin-bottom: 20px; padding: 15px; background-color: white; border-radius: 6px; border: 1px solid #e0e0e0;">
+            <h4 style="margin-top: 0; color: #dc3545;">⏳ Empresas Pendientes de Verificación ({{ pendingCompanies.length }})</h4>
+            
+            <!-- Botón para recargar -->
+            <button (click)="loadPendingCompanies()" 
+                    style="background-color: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-bottom: 15px; font-size: 12px;">
+              🔄 Actualizar Lista
+            </button>
+            
+            <div *ngIf="loadingPendingCompanies" style="text-align: center; padding: 20px; color: #666;">
+              Cargando empresas pendientes...
+            </div>
+
+            <div *ngIf="!loadingPendingCompanies && pendingCompanies.length === 0" style="text-align: center; padding: 20px; color: #666;">
+              ✅ No hay empresas pendientes de verificación.
+            </div>
+
+            <div *ngFor="let company of pendingCompanies" style="background-color: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="flex: 1;">
+                  <h4 style="margin: 0 0 5px 0; color: #333;">{{ company.nombre }}</h4>
+                  <p style="margin: 0; color: #666; font-size: 14px;">📧 {{ company.email }}</p>
+                  <p style="margin: 5px 0 0 0; color: #777; font-size: 13px;" *ngIf="company.descripcion">{{ company.descripcion }}</p>
+                  <p style="margin: 5px 0 0 0; color: #999; font-size: 12px;">Registrada: {{ company.created_at | date:'short' }}</p>
+                </div>
+                <button 
+                  (click)="verifyCompany(company.email)"
+                  [disabled]="verifyingCompany === company.email"
+                  style="background-color: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; margin-left: 15px;">
+                  {{ verifyingCompany === company.email ? '⏳ Verificando...' : '✅ Verificar' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       <!-- Sección Mis Recruiters - Solo para empresas verificadas -->
       <div class="recruiters-section" *ngIf="user.role === 'empresa' && user.verified" style="margin-top: 30px;">
         <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; background-color: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e0e0e0;" (click)="toggleRecruiters()">
@@ -156,19 +210,19 @@
         </div>
         
         <div *ngIf="showRecruiters" style="margin-top: 15px; padding: 15px; background-color: #f9f9f9; border-radius: 6px;">
-          <!-- Agregar nuevo recruiter -->
-          <div style="margin-bottom: 20px; padding: 15px; background-color: white; border-radius: 6px; border: 1px solid #e0e0e0;">
-            <h4 style="margin-top: 0; color: #007bff;">➕ Agregar Recruiter</h4>
-            <div style="display: flex; gap: 10px; align-items: center;">
+          <!-- Agregar nuevo recruiter - ACTUALIZADO -->
+          <div class="recruiter-add-section">
+            <h4 class="recruiter-add-title">➕ Agregar Recruiter</h4>
+            <div class="recruiter-add-form">
               <input 
                 type="email" 
                 [(ngModel)]="newRecruiterEmail" 
                 placeholder="Email del candidato"
-                style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                class="recruiter-email-input">
               <button 
                 (click)="addRecruiter()" 
                 [disabled]="!newRecruiterEmail.trim()"
-                style="background-color: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                class="add-recruiter-btn">
                 Agregar
               </button>
             </div>
@@ -192,7 +246,8 @@
               </div>
               <button 
                 (click)="removeRecruiter(recruiter.email)"
-                style="background-color: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                class="btn-danger"
+                style="padding: 6px 12px; font-size: 12px;">
                 Remover
               </button>
             </div>
@@ -209,12 +264,8 @@
         
         <div *ngIf="showRecruitingFor" style="margin-top: 15px; padding: 15px; background-color: #f9f9f9; border-radius: 6px;">
           <div *ngFor="let company of recruitingCompanies" style="background-color: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 10px;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <div style="background-color: #007bff; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-                {{ company.verified ? '✅ VERIFICADA' : '⏳ PENDIENTE' }}
-              </div>
-            </div>
-            <h4 style="margin: 10px 0 5px 0; color: #333;">{{ company.nombre }}</h4>
+            <!-- REMOVIDO: Badge de verificada ya que es obvio -->
+            <h4 style="margin: 0 0 5px 0; color: #333;">{{ company.nombre }}</h4>
             <p style="margin: 0; color: #666; font-size: 14px;">📧 {{ company.email }}</p>
             <p style="margin: 5px 0 0 0; color: #777; font-size: 13px;">{{ company.descripcion }}</p>
             <p style="margin: 5px 0 0 0; color: #999; font-size: 12px;">Asignado como recruiter: {{ company.assigned_at | date:'short' }}</p>

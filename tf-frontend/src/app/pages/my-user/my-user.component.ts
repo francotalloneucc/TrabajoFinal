@@ -30,7 +30,7 @@ export class MyUserComponent implements OnInit {
     descripcion: ''
   };
   tempCvFile: File | null = null;
-  tempProfilePicture: File | null = null; // NUEVO: Para manejar foto temporal
+  tempProfilePicture: File | null = null;
 
   // Datos para recruiters
   recruiters: any[] = [];
@@ -39,6 +39,12 @@ export class MyUserComponent implements OnInit {
   showRecruitingFor = false;
   loadingRecruiters = false;
   newRecruiterEmail = '';
+
+  // Datos para admin - NUEVOS
+  pendingCompanies: User[] = [];
+  showAdminPanel = false;
+  loadingPendingCompanies = false;
+  verifyingCompany: string | null = null;
 
   @ViewChild('photoInput') photoInput: any;
   @ViewChild('cvInput') cvInput: any;
@@ -74,6 +80,8 @@ export class MyUserComponent implements OnInit {
           this.loadRecruiters();
         } else if (userData.role === 'candidato') {
           this.loadRecruitingCompanies();
+        } else if (userData.role === 'admin') {
+          this.loadPendingCompanies(); // NUEVO: Cargar empresas pendientes para admins
         }
       },
       error: (error) => {
@@ -120,21 +128,21 @@ export class MyUserComponent implements OnInit {
   }
 
   triggerFileInput() {
-    if (!this.isEditing) return; // Solo permitir si está editando
+    if (!this.isEditing) return;
     this.photoInput.nativeElement.click();
   }
 
   onPhotoSelected(event: Event): void {
-    if (!this.isEditing) return; // Solo permitir si está editando
+    if (!this.isEditing) return;
     
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (file && file.type.startsWith('image/')) {
-      this.tempProfilePicture = file; // Guardar archivo temporal
+      this.tempProfilePicture = file;
       
       const reader = new FileReader();
       reader.onload = () => {
-        this.profileImageUrl = reader.result as string; // Mostrar preview
+        this.profileImageUrl = reader.result as string;
       };
       reader.readAsDataURL(file);
     } else {
@@ -171,7 +179,7 @@ export class MyUserComponent implements OnInit {
       descripcion: this.user.descripcion || ''
     };
     this.tempCvFile = null;
-    this.tempProfilePicture = null; // Resetear foto temporal
+    this.tempProfilePicture = null;
     this.isEditing = true;
   }
 
@@ -189,16 +197,14 @@ export class MyUserComponent implements OnInit {
         fecha_nacimiento: this.tempUser.fecha_nacimiento
       };
 
-      // ACTUALIZAR: Pasar también la foto de perfil
       this.authService.updateCurrentCandidato(
         updateData, 
         this.tempCvFile || undefined,
-        this.tempProfilePicture || undefined  // NUEVO parámetro
+        this.tempProfilePicture || undefined
       ).subscribe({
         next: (updatedUser) => {
           this.user = updatedUser;
           
-          // Actualizar URL de imagen si se subió una nueva
           if (updatedUser.profile_picture) {
             this.profileImageUrl = `http://localhost:8000/profile_pictures/${updatedUser.profile_picture}`;
           }
@@ -219,15 +225,13 @@ export class MyUserComponent implements OnInit {
         descripcion: this.tempUser.descripcion || ''
       };
 
-      // ACTUALIZAR: Pasar también la foto de perfil
       this.authService.updateCurrentEmpresa(
         updateData,
-        this.tempProfilePicture || undefined  // NUEVO parámetro
+        this.tempProfilePicture || undefined
       ).subscribe({
         next: (updatedUser) => {
           this.user = updatedUser;
           
-          // Actualizar URL de imagen si se subió una nueva
           if (updatedUser.profile_picture) {
             this.profileImageUrl = `http://localhost:8000/profile_pictures/${updatedUser.profile_picture}`;
           }
@@ -258,10 +262,9 @@ export class MyUserComponent implements OnInit {
   discardChanges() {
     this.isEditing = false;
     this.tempCvFile = null;
-    this.tempProfilePicture = null; // Resetear foto temporal
+    this.tempProfilePicture = null;
     this.errorMessage = '';
     
-    // Restaurar imagen original si existe
     if (this.user?.profile_picture) {
       this.profileImageUrl = `http://localhost:8000/profile_pictures/${this.user.profile_picture}`;
     } else {
@@ -321,7 +324,7 @@ export class MyUserComponent implements OnInit {
       next: (response: any) => {
         alert(response.message);
         this.newRecruiterEmail = '';
-        this.loadRecruiters(); // Recargar lista
+        this.loadRecruiters();
       },
       error: (error) => {
         console.error('Error al agregar recruiter:', error);
@@ -335,7 +338,7 @@ export class MyUserComponent implements OnInit {
       this.authService.removeRecruiter(recruiterEmail).subscribe({
         next: (response: any) => {
           alert(response.message);
-          this.loadRecruiters(); // Recargar lista
+          this.loadRecruiters();
         },
         error: (error) => {
           console.error('Error al remover recruiter:', error);
@@ -347,5 +350,50 @@ export class MyUserComponent implements OnInit {
 
   isRecruiter(): boolean {
     return this.recruitingCompanies && this.recruitingCompanies.length > 0;
+  }
+
+  // Métodos para admin - NUEVOS
+  
+  loadPendingCompanies(): void {
+    this.loadingPendingCompanies = true;
+    this.authService.getPendingCompanies().subscribe({
+      next: (companies) => {
+        this.pendingCompanies = companies;
+        this.loadingPendingCompanies = false;
+      },
+      error: (error) => {
+        console.error('Error al cargar empresas pendientes:', error);
+        this.loadingPendingCompanies = false;
+        this.errorMessage = 'Error al cargar empresas pendientes';
+      }
+    });
+  }
+
+  toggleAdminPanel(): void {
+    this.showAdminPanel = !this.showAdminPanel;
+    if (this.showAdminPanel && this.pendingCompanies.length === 0) {
+      this.loadPendingCompanies();
+    }
+  }
+
+  verifyCompany(companyEmail: string): void {
+    if (!confirm(`¿Estás seguro de verificar la empresa ${companyEmail}?`)) {
+      return;
+    }
+
+    this.verifyingCompany = companyEmail;
+    this.authService.verifyCompany(companyEmail).subscribe({
+      next: (response: any) => {
+        alert(response.message);
+        this.verifyingCompany = null;
+        // Remover la empresa de la lista de pendientes
+        this.pendingCompanies = this.pendingCompanies.filter(c => c.email !== companyEmail);
+      },
+      error: (error) => {
+        console.error('Error al verificar empresa:', error);
+        this.verifyingCompany = null;
+        alert(error.error?.detail || 'Error al verificar la empresa');
+      }
+    });
   }
 }
