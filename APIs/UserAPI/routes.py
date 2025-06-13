@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from datetime import timedelta, date
 
 from database import get_db
@@ -23,6 +23,7 @@ async def register_candidato(
     genero: GenderEnum = Form(...),
     fecha_nacimiento: date = Form(...),
     cv_file: UploadFile = File(...),
+    profile_picture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
     candidato_create = CandidatoCreate(
@@ -35,7 +36,7 @@ async def register_candidato(
     )
     
     user_service = UserService(db)
-    return user_service.create_candidato(candidato_create, cv_file)
+    return user_service.create_candidato(candidato_create, cv_file, profile_picture)
 
 # Endpoint para registro de empresas
 @router.post("/register-empresa", response_model=UserResponse)
@@ -44,6 +45,7 @@ async def register_empresa(
     password: str = Form(...),
     nombre: str = Form(...),
     descripcion: str = Form(...),
+    profile_picture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
     empresa_create = EmpresaCreate(
@@ -54,7 +56,7 @@ async def register_empresa(
     )
     
     user_service = UserService(db)
-    return user_service.create_empresa(empresa_create)
+    return user_service.create_empresa(empresa_create, profile_picture)
 
 # Mantener endpoint de registro antiguo para compatibilidad (será candidato por defecto)
 @router.post("/register", response_model=UserResponse)
@@ -66,6 +68,7 @@ async def register_user(
     genero: GenderEnum = Form(...),
     fecha_nacimiento: date = Form(...),
     cv_file: UploadFile = File(...),
+    profile_picture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
     candidato_create = CandidatoCreate(
@@ -78,7 +81,7 @@ async def register_user(
     )
     
     user_service = UserService(db)
-    return user_service.create_candidato(candidato_create, cv_file)
+    return user_service.create_candidato(candidato_create, cv_file, profile_picture)
 
 # Endpoint para login
 @router.post("/login", response_model=Token)
@@ -140,6 +143,7 @@ async def update_user(
     genero: GenderEnum = Form(None),
     fecha_nacimiento: date = Form(None),
     cv_file: UploadFile = File(None),
+    profile_picture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -153,7 +157,7 @@ async def update_user(
     )
     
     user_service = UserService(db)
-    return user_service.update_user(user_id, user_update, cv_file)
+    return user_service.update_user(user_id, user_update, cv_file, profile_picture)
 
 # Endpoint para eliminar usuario
 @router.delete("/users/{user_id}")
@@ -174,6 +178,7 @@ async def update_current_candidato(
     genero: GenderEnum = Form(None),
     fecha_nacimiento: date = Form(None),
     cv_file: UploadFile = File(None),
+    profile_picture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -195,13 +200,14 @@ async def update_current_candidato(
         user_update.fecha_nacimiento = fecha_nacimiento
     
     user_service = UserService(db)
-    return user_service.update_user(current_user.id, user_update, cv_file)
+    return user_service.update_user(current_user.id, user_update, cv_file, profile_picture)
 
 # Endpoint para actualizar empresa actual
 @router.put("/me/empresa", response_model=UserResponse)
 async def update_current_empresa(
     nombre: str = Form(None),
     descripcion: str = Form(None),
+    profile_picture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -219,7 +225,7 @@ async def update_current_empresa(
         user_update.descripcion = descripcion
     
     user_service = UserService(db)
-    return user_service.update_user(current_user.id, user_update)
+    return user_service.update_user(current_user.id, user_update, None, profile_picture)
 
 # Endpoint genérico (mantener para compatibilidad - decide automáticamente)
 @router.put("/me", response_model=UserResponse)
@@ -235,6 +241,9 @@ async def update_current_user(
     
     # Campos específicos de empresas
     descripcion: str = Form(None),
+    
+    # Campo común para todos
+    profile_picture: Optional[UploadFile] = File(None),
     
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -262,7 +271,7 @@ async def update_current_user(
             user_update.descripcion = descripcion
     
     user_service = UserService(db)
-    return user_service.update_user(current_user.id, user_update, cv_file)
+    return user_service.update_user(current_user.id, user_update, cv_file, profile_picture)
 
 # Función para verificar si es admin
 def require_admin(current_user: User = Depends(get_current_user)):

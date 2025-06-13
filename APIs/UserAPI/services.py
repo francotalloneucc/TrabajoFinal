@@ -20,7 +20,7 @@ class UserService:
     def get_all_users(self, skip: int = 0, limit: int = 100) -> List[User]:
         return self.db.query(User).offset(skip).limit(limit).all()
 
-    def create_candidato(self, candidato: CandidatoCreate, cv_file: UploadFile) -> User:
+    def create_candidato(self, candidato: CandidatoCreate, cv_file: UploadFile, profile_picture: Optional[UploadFile] = None) -> User:
         # Verificar si el usuario ya existe
         db_user = self.get_user_by_email(email=candidato.email)
         if db_user:
@@ -31,6 +31,11 @@ class UserService:
         
         # Guardar el archivo CV
         cv_filename = self.save_cv_file(cv_file)
+        
+        # Guardar la foto de perfil si se proporciona
+        profile_picture_filename = None
+        if profile_picture:
+            profile_picture_filename = self.save_profile_picture(profile_picture)
         
         # Crear el candidato
         hashed_password = get_password_hash(candidato.password)
@@ -43,6 +48,7 @@ class UserService:
             genero=candidato.genero,
             fecha_nacimiento=candidato.fecha_nacimiento,
             cv_filename=cv_filename,
+            profile_picture=profile_picture_filename,
             descripcion=None,  # NULL para candidatos
             verified=False  # Los candidatos no necesitan verificación
         )
@@ -51,7 +57,7 @@ class UserService:
         self.db.refresh(db_user)
         return db_user
 
-    def create_empresa(self, empresa: EmpresaCreate) -> User:
+    def create_empresa(self, empresa: EmpresaCreate, profile_picture: Optional[UploadFile] = None) -> User:
         # Verificar si el usuario ya existe
         db_user = self.get_user_by_email(email=empresa.email)
         if db_user:
@@ -59,6 +65,11 @@ class UserService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="El email ya está registrado"
             )
+        
+        # Guardar la foto de perfil si se proporciona
+        profile_picture_filename = None
+        if profile_picture:
+            profile_picture_filename = self.save_profile_picture(profile_picture)
         
         # Crear la empresa (sin verificar)
         hashed_password = get_password_hash(empresa.password)
@@ -68,6 +79,7 @@ class UserService:
             role=UserRoleEnum.empresa,
             nombre=empresa.nombre,
             descripcion=empresa.descripcion,
+            profile_picture=profile_picture_filename,
             verified=False,  # Las empresas requieren verificación
             # Campos NULL para empresas
             apellido=None,
@@ -80,7 +92,7 @@ class UserService:
         self.db.refresh(db_user)
         return db_user
 
-    def create_admin(self, admin_email: str, admin_password: str, admin_name: str) -> User:
+    def create_admin(self, admin_email: str, admin_password: str, admin_name: str, profile_picture: Optional[UploadFile] = None) -> User:
         # Solo para uso interno/scripts
         db_user = self.get_user_by_email(email=admin_email)
         if db_user:
@@ -89,12 +101,18 @@ class UserService:
                 detail="El email ya está registrado"
             )
         
+        # Guardar la foto de perfil si se proporciona
+        profile_picture_filename = None
+        if profile_picture:
+            profile_picture_filename = self.save_profile_picture(profile_picture)
+        
         hashed_password = get_password_hash(admin_password)
         db_user = User(
             email=admin_email,
             hashed_password=hashed_password,
             role=UserRoleEnum.admin,
             nombre=admin_name,
+            profile_picture=profile_picture_filename,
             verified=True,  # Admins siempre verificados
             # Campos NULL para admin
             apellido=None,
@@ -108,7 +126,7 @@ class UserService:
         self.db.refresh(db_user)
         return db_user
 
-    def update_user(self, user_id: int, user_update: UserUpdate, cv_file: Optional[UploadFile] = None) -> User:
+    def update_user(self, user_id: int, user_update: UserUpdate, cv_file: Optional[UploadFile] = None, profile_picture: Optional[UploadFile] = None) -> User:
         db_user = self.get_user_by_id(user_id)
         if not db_user:
             raise HTTPException(
@@ -129,6 +147,17 @@ class UserService:
             # Guardar el nuevo CV
             update_data["cv_filename"] = self.save_cv_file(cv_file)
         
+        # Si se proporciona una nueva foto de perfil, guardarla (para todos los roles)
+        if profile_picture:
+            # Eliminar la foto anterior si existe
+            if db_user.profile_picture:
+                old_picture_path = os.path.join("profile_pictures", db_user.profile_picture)
+                if os.path.exists(old_picture_path):
+                    os.remove(old_picture_path)
+            
+            # Guardar la nueva foto
+            update_data["profile_picture"] = self.save_profile_picture(profile_picture)
+        
         # Actualizar solo los campos permitidos según el rol del usuario
         for field, value in update_data.items():
             if hasattr(db_user, field):
@@ -139,11 +168,11 @@ class UserService:
                         setattr(db_user, field, value)
                 elif db_user.role == UserRoleEnum.empresa:
                     # Empresas no pueden actualizar campos específicos de candidatos
-                    if field in ["nombre", "descripcion"]:
+                    if field in ["nombre", "descripcion", "profile_picture"]:
                         setattr(db_user, field, value)
                 elif db_user.role == UserRoleEnum.admin:
-                    # Admins pueden actualizar nombre
-                    if field == "nombre":
+                    # Admins pueden actualizar nombre y foto
+                    if field in ["nombre", "profile_picture"]:
                         setattr(db_user, field, value)
         
         self.db.commit()
@@ -185,6 +214,12 @@ class UserService:
             if os.path.exists(cv_path):
                 os.remove(cv_path)
         
+        # Eliminar la foto de perfil si existe
+        if db_user.profile_picture:
+            picture_path = os.path.join("profile_pictures", db_user.profile_picture)
+            if os.path.exists(picture_path):
+                os.remove(picture_path)
+        
         self.db.delete(db_user)
         self.db.commit()
         return True
@@ -209,6 +244,31 @@ class UserService:
         # Guardar el archivo
         with open(file_path, "wb") as buffer:
             content = cv_file.file.read()
+            buffer.write(content)
+        
+        return unique_filename
+
+    def save_profile_picture(self, picture_file: UploadFile) -> str:
+        # Crear directorio si no existe
+        os.makedirs("profile_pictures", exist_ok=True)
+        
+        # Validar que sea una imagen
+        allowed_extensions = ["jpg", "jpeg", "png", "gif", "webp"]
+        file_extension = picture_file.filename.split(".")[-1].lower()
+        
+        if file_extension not in allowed_extensions:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Formato de archivo no válido. Permitidos: {', '.join(allowed_extensions)}"
+            )
+        
+        # Generar nombre único para el archivo
+        unique_filename = f"{uuid.uuid4()}.{file_extension}"
+        file_path = os.path.join("profile_pictures", unique_filename)
+        
+        # Guardar el archivo
+        with open(file_path, "wb") as buffer:
+            content = picture_file.file.read()
             buffer.write(content)
         
         return unique_filename

@@ -30,6 +30,7 @@ export class MyUserComponent implements OnInit {
     descripcion: ''
   };
   tempCvFile: File | null = null;
+  tempProfilePicture: File | null = null; // NUEVO: Para manejar foto temporal
 
   // Datos para recruiters
   recruiters: any[] = [];
@@ -62,6 +63,11 @@ export class MyUserComponent implements OnInit {
       next: (userData) => {
         this.user = userData;
         this.loading = false;
+        
+        // Cargar imagen de perfil si existe
+        if (userData.profile_picture) {
+          this.profileImageUrl = `http://localhost:8000/profile_pictures/${userData.profile_picture}`;
+        }
         
         // Cargar datos adicionales según el rol
         if (userData.role === 'empresa' && userData.verified) {
@@ -114,16 +120,21 @@ export class MyUserComponent implements OnInit {
   }
 
   triggerFileInput() {
+    if (!this.isEditing) return; // Solo permitir si está editando
     this.photoInput.nativeElement.click();
   }
 
   onPhotoSelected(event: Event): void {
+    if (!this.isEditing) return; // Solo permitir si está editando
+    
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (file && file.type.startsWith('image/')) {
+      this.tempProfilePicture = file; // Guardar archivo temporal
+      
       const reader = new FileReader();
       reader.onload = () => {
-        this.profileImageUrl = reader.result as string;
+        this.profileImageUrl = reader.result as string; // Mostrar preview
       };
       reader.readAsDataURL(file);
     } else {
@@ -160,6 +171,7 @@ export class MyUserComponent implements OnInit {
       descripcion: this.user.descripcion || ''
     };
     this.tempCvFile = null;
+    this.tempProfilePicture = null; // Resetear foto temporal
     this.isEditing = true;
   }
 
@@ -177,12 +189,24 @@ export class MyUserComponent implements OnInit {
         fecha_nacimiento: this.tempUser.fecha_nacimiento
       };
 
-      this.authService.updateCurrentCandidato(updateData, this.tempCvFile || undefined).subscribe({
+      // ACTUALIZAR: Pasar también la foto de perfil
+      this.authService.updateCurrentCandidato(
+        updateData, 
+        this.tempCvFile || undefined,
+        this.tempProfilePicture || undefined  // NUEVO parámetro
+      ).subscribe({
         next: (updatedUser) => {
           this.user = updatedUser;
+          
+          // Actualizar URL de imagen si se subió una nueva
+          if (updatedUser.profile_picture) {
+            this.profileImageUrl = `http://localhost:8000/profile_pictures/${updatedUser.profile_picture}`;
+          }
+          
           this.isEditing = false;
           this.saving = false;
           this.tempCvFile = null;
+          this.tempProfilePicture = null;
           alert('Cambios guardados correctamente.');
         },
         error: (error) => {
@@ -195,11 +219,22 @@ export class MyUserComponent implements OnInit {
         descripcion: this.tempUser.descripcion || ''
       };
 
-      this.authService.updateCurrentEmpresa(updateData).subscribe({
+      // ACTUALIZAR: Pasar también la foto de perfil
+      this.authService.updateCurrentEmpresa(
+        updateData,
+        this.tempProfilePicture || undefined  // NUEVO parámetro
+      ).subscribe({
         next: (updatedUser) => {
           this.user = updatedUser;
+          
+          // Actualizar URL de imagen si se subió una nueva
+          if (updatedUser.profile_picture) {
+            this.profileImageUrl = `http://localhost:8000/profile_pictures/${updatedUser.profile_picture}`;
+          }
+          
           this.isEditing = false;
           this.saving = false;
+          this.tempProfilePicture = null;
           alert('Cambios guardados correctamente.');
         },
         error: (error) => {
@@ -223,7 +258,15 @@ export class MyUserComponent implements OnInit {
   discardChanges() {
     this.isEditing = false;
     this.tempCvFile = null;
+    this.tempProfilePicture = null; // Resetear foto temporal
     this.errorMessage = '';
+    
+    // Restaurar imagen original si existe
+    if (this.user?.profile_picture) {
+      this.profileImageUrl = `http://localhost:8000/profile_pictures/${this.user.profile_picture}`;
+    } else {
+      this.profileImageUrl = null;
+    }
   }
 
   logout() {

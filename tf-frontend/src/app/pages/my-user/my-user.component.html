@@ -26,11 +26,22 @@
         </button>
       </div>
     
-      <div class="profile-image-wrapper" (click)="triggerFileInput()">
+      <!-- Foto de perfil - ACTUALIZADA -->
+      <div class="profile-image-wrapper" 
+           [class.editable]="isEditing" 
+           [style.cursor]="isEditing ? 'pointer' : 'default'"
+           (click)="isEditing ? triggerFileInput() : null">
         <img *ngIf="profileImageUrl; else placeholder" [src]="profileImageUrl" alt="Foto de perfil" />
         <ng-template #placeholder>
-          <div class="empty-photo">Sin foto</div>
+          <div class="empty-photo">
+            {{ isEditing ? 'Click para agregar foto' : 'Sin foto' }}
+          </div>
         </ng-template>
+        <!-- Mostrar indicador de que se puede editar -->
+        <div *ngIf="isEditing" class="edit-overlay">
+          <span style="font-size: 24px;">📷</span>
+          <small style="display: block; margin-top: 4px;">Cambiar foto</small>
+        </div>
         <input type="file" (change)="onPhotoSelected($event)" accept="image/*" #photoInput hidden />
       </div>
     

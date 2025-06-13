@@ -250,3 +250,53 @@
 .upload-btn:hover {
   background-color: #545b62;
 }
+
+/* Agregar estos estilos al final de tu my-user.component.css */
+
+.profile-image-wrapper {
+  position: relative; /* Importante para el overlay */
+}
+
+.profile-image-wrapper.editable {
+  border-color: #007bff; /* Cambiar color del borde cuando es editable */
+}
+
+.profile-image-wrapper.editable:hover {
+  border-color: #0056b3;
+  transform: scale(1.02);
+  transition: all 0.3s ease;
+}
+
+.edit-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 123, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 50%;
+  font-weight: 600;
+}
+
+.profile-image-wrapper.editable:hover .edit-overlay {
+  opacity: 1;
+}
+
+.empty-photo {
+  padding: 20px;
+  font-size: 0.9rem;
+  color: #999;
+  text-align: center;
+}
+
+.profile-image-wrapper.editable .empty-photo {
+  color: #007bff;
+  font-weight: 600;
+}

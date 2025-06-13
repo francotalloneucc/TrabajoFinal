@@ -23,6 +23,7 @@ class CandidatoResponse(UserBase):
     genero: GenderEnum
     fecha_nacimiento: date
     cv_filename: str
+    profile_picture: Optional[str] = None  # NUEVO
     verified: bool
 
     class Config:
@@ -37,6 +38,7 @@ class EmpresaCreate(UserBase):
 class EmpresaResponse(UserBase):
     id: int
     descripcion: str
+    profile_picture: Optional[str] = None  # NUEVO
     verified: bool
 
     class Config:
@@ -50,6 +52,7 @@ class AdminCreate(UserBase):
 class AdminResponse(UserBase):
     id: int
     verified: bool
+    profile_picture: Optional[str] = None  # NUEVO
     created_at: datetime
 
     class Config:
@@ -62,6 +65,7 @@ class UserResponse(BaseModel):
     nombre: str
     role: UserRoleEnum
     verified: bool
+    profile_picture: Optional[str] = None  # NUEVO: Foto de perfil (opcional)
     # Campos opcionales según el rol
     apellido: Optional[str] = None
     genero: Optional[GenderEnum] = None

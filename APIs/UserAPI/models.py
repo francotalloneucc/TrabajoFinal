@@ -25,6 +25,7 @@ class User(Base):
     
     # Campos comunes
     nombre = Column(String, nullable=False)
+    profile_picture = Column(String, nullable=True)  # NUEVO: Foto de perfil (opcional)
     
     # Campos específicos de candidatos (nullable para empresas y admin)
     apellido = Column(String, nullable=True)
@@ -53,5 +54,5 @@ class CompanyRecruiter(Base):
     
     # Relaciones
     company = relationship("User", foreign_keys=[company_id], back_populates="company_recruiters")
-    recruiter = relationship("User", foreign_keys=[recruiter_id], back_populates="recruiting_for")  # Nombre único en el servidor
+    recruiter = relationship("User", foreign_keys=[recruiter_id], back_populates="recruiting_for")
     cv_original_name = Column(String, nullable=True)  # Nombre original del archivo

@@ -8,8 +8,9 @@ import os
 # Solo crear las tablas si no existen (NO borrar las existentes)
 Base.metadata.create_all(bind=engine)
 
-# Crear directorio para CVs si no existe
+# Crear directorios si no existen
 os.makedirs("uploaded_cvs", exist_ok=True)
+os.makedirs("profile_pictures", exist_ok=True)  # NUEVO: Directorio para fotos de perfil
 
 app = FastAPI(
     title="UserAPI",
@@ -28,6 +29,9 @@ app.add_middleware(
 
 # Servir archivos estáticos (CVs)
 app.mount("/uploaded_cvs", StaticFiles(directory="uploaded_cvs"), name="uploaded_cvs")
+
+# Servir fotos de perfil
+app.mount("/profile_pictures", StaticFiles(directory="profile_pictures"), name="profile_pictures")  # NUEVO
 
 # Incluir las rutas
 app.include_router(router, prefix="/api/v1", tags=["users"])
