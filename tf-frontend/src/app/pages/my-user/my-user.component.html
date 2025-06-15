@@ -199,6 +199,90 @@
             </div>
           </div>
 
+          <!-- Sección Ver Candidatos - NUEVA -->
+          <div style="margin-top: 20px; padding: 15px; background-color: white; border-radius: 6px; border: 1px solid #e0e0e0;">
+            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 8px 0;" (click)="toggleCandidates()">
+              <h4 style="margin: 0; color: #28a745;">👥 Ver Todos los Candidatos ({{ candidates.length }})</h4>
+              <span style="font-size: 16px; transition: transform 0.3s ease;" [style.transform]="showCandidates ? 'rotate(180deg)' : 'rotate(0deg)'">▼</span>
+            </div>
+            
+            <div *ngIf="showCandidates" style="margin-top: 15px;">
+              
+              <div *ngIf="loadingCandidates" style="text-align: center; padding: 20px; color: #666;">
+                Cargando candidatos...
+              </div>
+
+              <div *ngIf="!loadingCandidates && candidates.length === 0" style="text-align: center; padding: 20px; color: #666;">
+                No hay candidatos registrados.
+              </div>
+
+              <div *ngFor="let candidate of candidates" style="background-color: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                  
+                  <!-- Información del candidato -->
+                  <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                      <!-- Foto de perfil -->
+                      <div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background-color: #ddd; display: flex; align-items: center; justify-content: center;">
+                        <img *ngIf="candidate.profile_picture" 
+                             [src]="'http://localhost:8000/profile_pictures/' + candidate.profile_picture" 
+                             style="width: 100%; height: 100%; object-fit: cover;" 
+                             alt="Foto de perfil">
+                        <span *ngIf="!candidate.profile_picture" style="font-size: 12px; color: #666;">👤</span>
+                      </div>
+                      
+                      <div>
+                        <h4 style="margin: 0; color: #333;">{{ candidate.nombre }} {{ candidate.apellido }}</h4>
+                        <p style="margin: 0; color: #666; font-size: 13px;">📧 {{ candidate.email }}</p>
+                      </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; color: #777;">
+                      <p style="margin: 0;"><strong>Género:</strong> {{ candidate.genero }}</p>
+                      <p style="margin: 0;"><strong>Fecha nac.:</strong> {{ candidate.fecha_nacimiento | date:'shortDate' }}</p>
+                      <p style="margin: 0;"><strong>Registrado:</strong> {{ candidate.created_at | date:'short' }}</p>
+                      <p style="margin: 0;"><strong>CV:</strong> {{ candidate.cv_filename ? 'Disponible' : 'No disponible' }}</p>
+                    </div>
+                    
+                    <!-- Indicador de CV analizado -->
+                    <div style="margin-top: 8px;">
+                      <span *ngIf="candidate.cv_analizado" 
+                            style="background-color: #d4edda; color: #155724; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                        🧠 CV ANALIZADO
+                      </span>
+                      <span *ngIf="!candidate.cv_analizado" 
+                            style="background-color: #fff3cd; color: #856404; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                        ⚠️ SIN ANÁLISIS
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Acciones -->
+                  <div style="display: flex; flex-direction: column; gap: 6px; margin-left: 15px;">
+                    <button 
+                      *ngIf="candidate.cv_analizado"
+                      (click)="viewCvAnalysis(candidate)"
+                      style="background-color: #007bff; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; white-space: nowrap;">
+                      🧠 Ver Análisis
+                    </button>
+                    
+                    <button 
+                      *ngIf="candidate.cv_filename"
+                      (click)="downloadCandidateCV(candidate)"
+                      style="background-color: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; white-space: nowrap;">
+                      ⬇️ Descargar CV
+                    </button>
+                    
+                    <button 
+                      style="background-color: #6c757d; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; white-space: nowrap;">
+                      👁️ Ver Perfil
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 

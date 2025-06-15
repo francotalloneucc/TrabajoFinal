@@ -40,11 +40,16 @@ export class MyUserComponent implements OnInit {
   loadingRecruiters = false;
   newRecruiterEmail = '';
 
-  // Datos para admin - NUEVOS
+  // Datos para admin
   pendingCompanies: User[] = [];
   showAdminPanel = false;
   loadingPendingCompanies = false;
   verifyingCompany: string | null = null;
+
+  // NUEVAS propiedades para ver candidatos
+  candidates: User[] = [];
+  showCandidates = false;
+  loadingCandidates = false;
 
   @ViewChild('photoInput') photoInput: any;
   @ViewChild('cvInput') cvInput: any;
@@ -81,7 +86,7 @@ export class MyUserComponent implements OnInit {
         } else if (userData.role === 'candidato') {
           this.loadRecruitingCompanies();
         } else if (userData.role === 'admin') {
-          this.loadPendingCompanies(); // NUEVO: Cargar empresas pendientes para admins
+          this.loadPendingCompanies();
         }
       },
       error: (error) => {
@@ -114,17 +119,34 @@ export class MyUserComponent implements OnInit {
   }
 
   downloadCV(): void {
-    if (!this.user || !this.user.cv_filename) return;
+    if (!this.user || !this.user.cv_filename) {
+      alert('No hay CV disponible para descargar');
+      return;
+    }
     
     const downloadUrl = `http://localhost:8000/uploaded_cvs/${this.user.cv_filename}`;
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = this.getDisplayCvName();
-    link.target = '_blank';
+    console.log('🔗 Intentando descargar CV desde:', downloadUrl);
     
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    fetch(downloadUrl, { method: 'HEAD' })
+      .then(response => {
+        if (response.ok) {
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.download = this.getDisplayCvName();
+          link.target = '_blank';
+          
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          alert('El archivo CV no se encuentra disponible en el servidor');
+          console.error('❌ CV no encontrado:', response.status);
+        }
+      })
+      .catch(error => {
+        console.error('❌ Error al acceder al CV:', error);
+        alert('Error al acceder al archivo CV');
+      });
   }
 
   triggerFileInput() {
@@ -352,8 +374,7 @@ export class MyUserComponent implements OnInit {
     return this.recruitingCompanies && this.recruitingCompanies.length > 0;
   }
 
-  // Métodos para admin - NUEVOS
-  
+  // Métodos para admin
   loadPendingCompanies(): void {
     this.loadingPendingCompanies = true;
     this.authService.getPendingCompanies().subscribe({
@@ -386,7 +407,6 @@ export class MyUserComponent implements OnInit {
       next: (response: any) => {
         alert(response.message);
         this.verifyingCompany = null;
-        // Remover la empresa de la lista de pendientes
         this.pendingCompanies = this.pendingCompanies.filter(c => c.email !== companyEmail);
       },
       error: (error) => {
@@ -395,5 +415,57 @@ export class MyUserComponent implements OnInit {
         alert(error.error?.detail || 'Error al verificar la empresa');
       }
     });
+  }
+
+  // NUEVOS métodos para candidatos
+  loadCandidates(): void {
+    this.loadingCandidates = true;
+    this.authService.getAllCandidates().subscribe({
+      next: (candidates) => {
+        this.candidates = candidates;
+        this.loadingCandidates = false;
+        console.log('📋 Candidatos cargados:', candidates);
+      },
+      error: (error) => {
+        console.error('Error al cargar candidatos:', error);
+        this.loadingCandidates = false;
+        this.errorMessage = 'Error al cargar candidatos';
+      }
+    });
+  }
+
+  toggleCandidates(): void {
+    this.showCandidates = !this.showCandidates;
+    if (this.showCandidates && this.candidates.length === 0) {
+      this.loadCandidates();
+    }
+  }
+
+  viewCvAnalysis(candidate: User): void {
+    if (candidate.cv_analizado) {
+      console.log('🧠 CV Analizado de', candidate.nombre, candidate.apellido, ':', candidate.cv_analizado);
+      
+      const analysisData = JSON.stringify(candidate.cv_analizado, null, 2);
+      alert(`CV Analizado de ${candidate.nombre} ${candidate.apellido}:\n\n${analysisData}`);
+    } else {
+      alert('Este candidato no tiene CV analizado disponible.');
+    }
+  }
+
+  downloadCandidateCV(candidate: User): void {
+    if (!candidate.cv_filename) {
+      alert('Este candidato no tiene CV disponible');
+      return;
+    }
+    
+    const downloadUrl = `http://localhost:8000/uploaded_cvs/${candidate.cv_filename}`;
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `${candidate.nombre}_${candidate.apellido}_CV.pdf`;
+    link.target = '_blank';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 }

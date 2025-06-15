@@ -112,22 +112,75 @@
             (change)="checkAge()" />
           <p class="error" *ngIf="birthDateError">Debés tener al menos 18 años.</p>
         </div>
-  
+
+        <!-- Foto de perfil (opcional) - MOVIDO AQUÍ -->
         <div class="form-row">
-          <label for="cv">Cargar CV (PDF)</label>
+          <label for="profile_picture">Foto de Perfil (Opcional)</label>
+          <input 
+            type="file" 
+            id="profile_picture" 
+            accept="image/*"
+            (change)="onProfilePictureSelected($event)" />
+          <small class="form-text">Formatos permitidos: JPG, PNG, GIF</small>
+        </div>
+  
+        <!-- CV con validación IA - ACTUALIZADO -->
+        <div class="form-row">
+          <label for="cv">Cargar CV (PDF) *</label>
           <input
             type="file"
             id="cv"
             name="cv"
             (change)="onFileSelected($event)"
             accept="application/pdf"
+            [disabled]="cvAnalyzing"
             required />
+          
+          <!-- Estado de validación del CV - ACTUALIZADO -->
+          <div class="cv-validation-status" *ngIf="candidatoData.cv || cvAnalyzing">
+            
+            <!-- Analizando - TEXTO SIMPLIFICADO -->
+            <div *ngIf="cvAnalyzing" class="validation-message analyzing">
+              <div class="spinner"></div>
+              Analizando CV...
+            </div>
+            
+            <!-- CV válido -->
+            <div *ngIf="cvValid && !cvAnalyzing" class="validation-message valid">
+              {{ cvValidationMessage }}
+              <button type="button" (click)="removeCv()" class="btn-remove">✕</button>
+            </div>
+            
+            <!-- CV inválido -->
+            <div *ngIf="!cvValid && !cvAnalyzing && cvValidationMessage" class="validation-message invalid">
+              {{ cvValidationMessage }}
+              <button type="button" (click)="removeCv()" class="btn-remove">✕</button>
+            </div>
+            
+          </div>
+          
+          <!-- Información del archivo seleccionado -->
+          <div *ngIf="candidatoData.cv && cvValid" class="file-info">
+            📄 <strong>{{ candidatoData.cv.name }}</strong> ({{ (candidatoData.cv.size / 1024 / 1024).toFixed(2) }} MB)
+          </div>
+
           <p class="error" *ngIf="cvError">Solo se permite un archivo PDF.</p>
         </div>
       </div>
 
       <!-- Campos específicos de EMPRESAS -->
       <div *ngIf="userType === 'empresa'">
+        <!-- Foto de perfil (opcional) - TAMBIÉN PARA EMPRESAS -->
+        <div class="form-row">
+          <label for="profile_picture_empresa">Foto de Perfil (Opcional)</label>
+          <input 
+            type="file" 
+            id="profile_picture_empresa" 
+            accept="image/*"
+            (change)="onProfilePictureSelected($event)" />
+          <small class="form-text">Formatos permitidos: JPG, PNG, GIF</small>
+        </div>
+
         <div class="form-row">
           <label for="descripcion">Descripción de la Empresa</label>
           <textarea
@@ -143,10 +196,13 @@
         </div>
       </div>
   
+      <!-- Botón de registro - ACTUALIZADO -->
       <button
         type="submit"
         [disabled]="!isFormValid() || loading">
-        {{ loading ? 'Registrando...' : 'Registrarse' }}
+        <span *ngIf="loading">Registrando...</span>
+        <span *ngIf="!loading && userType === 'candidato' && cvAnalyzing">Analizando CV...</span>
+        <span *ngIf="!loading && !cvAnalyzing">Registrarse</span>
       </button>
 
       <!-- Mostrar mensaje de error si existe -->

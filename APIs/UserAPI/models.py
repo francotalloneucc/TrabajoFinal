@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, Enum, Text, Boolean, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Date, Enum, Text, Boolean, ForeignKey, DateTime, JSON
 from sqlalchemy.orm import relationship
 from database import Base
 import enum
@@ -25,13 +25,14 @@ class User(Base):
     
     # Campos comunes
     nombre = Column(String, nullable=False)
-    profile_picture = Column(String, nullable=True)  # NUEVO: Foto de perfil (opcional)
+    profile_picture = Column(String, nullable=True)
     
     # Campos específicos de candidatos (nullable para empresas y admin)
     apellido = Column(String, nullable=True)
     genero = Column(Enum(GenderEnum), nullable=True)
     fecha_nacimiento = Column(Date, nullable=True)
     cv_filename = Column(String, nullable=True)
+    cv_analizado = Column(JSON, nullable=True)  # NUEVO: Resultado del análisis del CV
     
     # Campos específicos de empresas (nullable para candidatos y admin)
     descripcion = Column(Text, nullable=True)

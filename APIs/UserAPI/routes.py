@@ -499,3 +499,15 @@ async def get_recruiting_companies(
         "companies": company_list,
         "total": len(company_list)
     }
+
+@router.get("/admin/candidates", response_model=List[UserResponse])
+async def get_all_candidates(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    """Ver todos los candidatos con sus datos y CV analizados (solo admins)"""
+    user_service = UserService(db)
+    candidates = user_service.get_all_candidates(skip=skip, limit=limit)
+    return candidates

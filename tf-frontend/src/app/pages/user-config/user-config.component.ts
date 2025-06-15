@@ -48,6 +48,13 @@ export class UserConfigComponent {
   loading = false;
   errorMessage = '';
 
+  // NUEVAS propiedades para validación de CV
+  cvValid: boolean = false;
+  cvAnalyzing: boolean = false;
+  cvValidationMessage: string = '';
+  structuredCvData: any = null;
+  profilePicture: File | null = null;
+
   // Cambiar tipo de usuario
   onUserTypeChange(type: 'candidato' | 'empresa'): void {
     this.userType = type;
@@ -63,6 +70,8 @@ export class UserConfigComponent {
     };
     this.cvError = false;
     this.birthDateError = false;
+    // NUEVO: Reset validación CV
+    this.resetCvValidation();
   }
 
   // Validación de email
@@ -109,10 +118,12 @@ export class UserConfigComponent {
     this.birthDateError = age < 18 || (age === 18 && m < 0);
   }
 
+  // ACTUALIZADO: Validación de CV con IA
   onFileSelected(event: any): void {
     const file: File = event.target.files[0];
     if (!file) {
       this.cvError = true;
+      this.resetCvValidation();
       return;
     }
 
@@ -121,14 +132,81 @@ export class UserConfigComponent {
       this.candidatoData.cv = null;
       this.cvError = true;
       event.target.value = '';
+      this.resetCvValidation();
       return;
     }
 
     this.candidatoData.cv = file;
     this.cvError = false;
+    this.validateCvWithAI(file);
   }
 
-  // Validar formulario según el tipo
+  // NUEVO: Validar CV con IA
+  private validateCvWithAI(file: File): void {
+    this.cvAnalyzing = true;
+    this.cvValidationMessage = '🤖 Analizando CV con IA...';
+    this.cvValid = false;
+    
+    this.authService.analyzeCv(file).subscribe({
+      next: (result) => {
+        console.log('✅ CV Analysis Result:', result);
+        
+        this.cvAnalyzing = false;
+        this.cvValid = true;
+        this.structuredCvData = result.data;
+        this.cvValidationMessage = '✅ CV válido y analizado correctamente';
+      },
+      error: (error) => {
+        console.error('❌ CV Analysis Error:', error);
+        
+        this.cvAnalyzing = false;
+        this.cvValid = false;
+        this.structuredCvData = null;
+        
+        // Mensaje de error más amigable
+        if (error.status === 400) {
+          this.cvValidationMessage = `❌ ${error.error?.detail || 'El archivo no es un CV válido'}`;
+        } else {
+          this.cvValidationMessage = '❌ Error al analizar el CV. Intenta nuevamente.';
+        }
+      }
+    });
+  }
+
+  // NUEVO: Reset validación de CV
+  private resetCvValidation(): void {
+    this.cvValid = false;
+    this.cvAnalyzing = false;
+    this.cvValidationMessage = '';
+    this.structuredCvData = null;
+  }
+
+  // NUEVO: Método para remover CV seleccionado
+  removeCv(): void {
+    this.candidatoData.cv = null;
+    this.resetCvValidation();
+    this.cvError = false;
+    
+    // Limpiar el input file
+    const cvInput = document.getElementById('cv') as HTMLInputElement;
+    if (cvInput) cvInput.value = '';
+  }
+
+  // NUEVO: Método para foto de perfil (opcional)
+  onProfilePictureSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    
+    if (file && file.type.startsWith('image/')) {
+      this.profilePicture = file;
+      console.log('📷 Foto de perfil seleccionada:', file.name);
+    } else if (file) {
+      alert('La foto de perfil debe ser una imagen válida.');
+      this.profilePicture = null;
+    }
+  }
+
+  // ACTUALIZADO: Validar formulario según el tipo
   isFormValid(): boolean {
     const commonValid = this.commonData.email && 
                        this.commonData.password && 
@@ -143,6 +221,8 @@ export class UserConfigComponent {
              this.candidatoData.gender &&
              this.candidatoData.birthDate &&
              this.candidatoData.cv &&
+             this.cvValid &&  // NUEVO: CV debe estar validado
+             !this.cvAnalyzing &&  // NUEVO: No debe estar analizando
              !this.birthDateError &&
              !this.cvError &&
              !this.hasInvalidChars(this.candidatoData.apellido));
@@ -153,6 +233,9 @@ export class UserConfigComponent {
 
   onSubmit(): void {
     if (!this.isFormValid()) {
+      if (this.userType === 'candidato' && !this.cvValid) {
+        alert('Por favor sube un CV válido antes de continuar');
+      }
       return;
     }
 
@@ -166,6 +249,7 @@ export class UserConfigComponent {
     }
   }
 
+  // ACTUALIZADO: Registro de candidato con foto de perfil
   private registerCandidato(): void {
     const candidatoData: CandidatoRequest = {
       email: this.commonData.email,
@@ -176,10 +260,14 @@ export class UserConfigComponent {
       fecha_nacimiento: this.candidatoData.birthDate
     };
 
-    this.authService.registerCandidato(candidatoData, this.candidatoData.cv!).subscribe({
+    console.log('🚀 Registrando candidato...');
+    console.log('📋 Datos estructurados del CV:', this.structuredCvData);
+
+    this.authService.registerCandidato(candidatoData, this.candidatoData.cv!, this.profilePicture || undefined).subscribe({
       next: (response: any) => {
-        console.log('Candidato registrado exitosamente:', response);
-        alert('¡Candidato registrado exitosamente!');
+        console.log('✅ Candidato registrado exitosamente:', response);
+        console.log('🧠 CV analizado y guardado:', response.cv_analizado);
+        alert('¡Candidato registrado exitosamente! Tu CV ha sido analizado y guardado.');
         this.router.navigate(['/login']);
       },
       error: (error: any) => {
@@ -191,6 +279,7 @@ export class UserConfigComponent {
     });
   }
 
+  // ACTUALIZADO: Registro de empresa con foto de perfil
   private registerEmpresa(): void {
     const empresaData: EmpresaRequest = {
       email: this.commonData.email,
@@ -199,10 +288,10 @@ export class UserConfigComponent {
       descripcion: this.empresaData.descripcion
     };
 
-    this.authService.registerEmpresa(empresaData).subscribe({
+    this.authService.registerEmpresa(empresaData, this.profilePicture || undefined).subscribe({
       next: (response: any) => {
-        console.log('Empresa registrada exitosamente:', response);
-        alert('¡Empresa registrada exitosamente!');
+        console.log('✅ Empresa registrada exitosamente:', response);
+        alert('¡Empresa registrada exitosamente! Esperando verificación de Polo52.');
         this.router.navigate(['/login']);
       },
       error: (error: any) => {
@@ -219,7 +308,12 @@ export class UserConfigComponent {
     this.loading = false;
     
     if (error.error && error.error.detail) {
-      this.errorMessage = error.error.detail;
+      if (error.error.detail.includes('CV')) {
+        this.errorMessage = 'Error: El CV no pudo ser procesado. Intenta con otro archivo.';
+        this.resetCvValidation();
+      } else {
+        this.errorMessage = error.error.detail;
+      }
     } else if (error.status === 400) {
       this.errorMessage = 'El email ya está registrado o hay datos inválidos.';
     } else if (error.status === 0) {

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import date, datetime
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from models import GenderEnum, UserRoleEnum
 
 # Schemas para User Base
@@ -23,7 +23,8 @@ class CandidatoResponse(UserBase):
     genero: GenderEnum
     fecha_nacimiento: date
     cv_filename: str
-    profile_picture: Optional[str] = None  # NUEVO
+    profile_picture: Optional[str] = None
+    cv_analizado: Optional[Dict[str, Any]] = None  # NUEVO
     verified: bool
 
     class Config:
@@ -38,7 +39,7 @@ class EmpresaCreate(UserBase):
 class EmpresaResponse(UserBase):
     id: int
     descripcion: str
-    profile_picture: Optional[str] = None  # NUEVO
+    profile_picture: Optional[str] = None
     verified: bool
 
     class Config:
@@ -52,7 +53,7 @@ class AdminCreate(UserBase):
 class AdminResponse(UserBase):
     id: int
     verified: bool
-    profile_picture: Optional[str] = None  # NUEVO
+    profile_picture: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -65,12 +66,13 @@ class UserResponse(BaseModel):
     nombre: str
     role: UserRoleEnum
     verified: bool
-    profile_picture: Optional[str] = None  # NUEVO: Foto de perfil (opcional)
+    profile_picture: Optional[str] = None
     # Campos opcionales según el rol
     apellido: Optional[str] = None
     genero: Optional[GenderEnum] = None
     fecha_nacimiento: Optional[date] = None
     cv_filename: Optional[str] = None
+    cv_analizado: Optional[Dict[str, Any]] = None  # NUEVO
     descripcion: Optional[str] = None
     created_at: Optional[datetime] = None
 

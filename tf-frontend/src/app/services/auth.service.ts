@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 
 export interface User {
   id: number;
@@ -14,6 +15,7 @@ export interface User {
   genero?: 'masculino' | 'femenino' | 'otro';
   fecha_nacimiento?: string;
   cv_filename?: string;
+  cv_analizado?: any; // NUEVO: Datos estructurados del CV
   descripcion?: string;
   created_at?: string;
 }
@@ -54,13 +56,40 @@ export interface AuthResponse {
   token_type: string;
 }
 
+// NUEVO: Interface para respuesta de CvAnalyzer
+export interface CvAnalysisResponse {
+  valid: boolean;
+  message: string;
+  data?: any;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private baseUrl = 'http://localhost:8000/api/v1';
+  private cvAnalyzerUrl = 'http://localhost:8001'; // NUEVO: URL de CvAnalyzerAPI
 
   constructor(private http: HttpClient) {}
+
+  // NUEVO: Analizar CV con IA
+  analyzeCv(cvFile: File): Observable<CvAnalysisResponse> {
+    const formData = new FormData();
+    formData.append('file', cvFile);
+    
+    return this.http.post<CvAnalysisResponse>(`${this.cvAnalyzerUrl}/analyze/`, formData);
+  }
+
+  // NUEVO: Validar solo si el CV es válido (sin obtener datos)
+  validateCvOnly(cvFile: File): Observable<boolean> {
+    return this.analyzeCv(cvFile).pipe(
+      map(result => result.valid === true),
+      catchError((error) => {
+        console.error('Error validando CV:', error);
+        return of(false);
+      })
+    );
+  }
 
   // Registro de candidatos
   registerCandidato(userData: CandidatoRequest, cvFile: File, profilePicture?: File): Observable<User> {
@@ -217,7 +246,7 @@ export class AuthService {
     );
   }
 
-  // Métodos para administradores - NUEVOS
+  // Métodos para administradores
   
   // Obtener empresas pendientes de verificación
   getPendingCompanies(): Observable<User[]> {
@@ -244,6 +273,16 @@ export class AuthService {
     );
   }
 
+    // Agregar este método en tu AuthService
+getAllCandidates(skip: number = 0, limit: number = 100): Observable<User[]> {
+  const token = this.getToken();
+  return this.http.get<User[]>(`${this.baseUrl}/admin/candidates?skip=${skip}&limit=${limit}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+}
+
   // Obtener todos los usuarios (solo admins)
   getAllUsers(skip: number = 0, limit: number = 100): Observable<User[]> {
     const token = this.getToken();
@@ -254,3 +293,4 @@ export class AuthService {
     });
   }
 }
+

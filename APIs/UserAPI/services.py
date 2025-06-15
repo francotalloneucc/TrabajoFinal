@@ -5,6 +5,7 @@ from schemas import CandidatoCreate, EmpresaCreate, UserUpdate, CompanyRecruiter
 from auth import get_password_hash, verify_password
 import os
 import uuid
+import requests
 from typing import List, Optional
 
 class UserService:
@@ -20,6 +21,42 @@ class UserService:
     def get_all_users(self, skip: int = 0, limit: int = 100) -> List[User]:
         return self.db.query(User).offset(skip).limit(limit).all()
 
+    def analyze_cv_with_api(self, cv_file: UploadFile) -> Optional[dict]:
+        """
+        Analiza el CV usando la CvAnalyzerAPI
+        """
+        try:
+            # CORREGIDO: Leer el contenido completo primero
+            cv_file.file.seek(0)  # Asegurar que esté al inicio
+            file_content = cv_file.file.read()  # Leer todo el contenido
+            cv_file.file.seek(0)  # Resetear para uso posterior
+            
+            # Preparar el archivo para la API usando el contenido leído
+            files = {
+                'file': (cv_file.filename, file_content, cv_file.content_type)
+            }
+            
+            # Llamar a CvAnalyzerAPI
+            response = requests.post(
+                'http://localhost:8001/analyze/',
+                files=files,
+                timeout=30  # 30 segundos timeout
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                return result.get('data', None)
+            else:
+                print(f"Error en CvAnalyzerAPI: {response.status_code} - {response.text}")
+                return None
+                
+        except requests.exceptions.RequestException as e:
+            print(f"Error conectando con CvAnalyzerAPI: {e}")
+            return None
+        except Exception as e:
+            print(f"Error inesperado analizando CV: {e}")
+            return None
+
     def create_candidato(self, candidato: CandidatoCreate, cv_file: UploadFile, profile_picture: Optional[UploadFile] = None) -> User:
         # Verificar si el usuario ya existe
         db_user = self.get_user_by_email(email=candidato.email)
@@ -27,6 +64,14 @@ class UserService:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="El email ya está registrado"
+            )
+        
+        # NUEVO: Analizar CV con CvAnalyzerAPI
+        cv_analysis_result = self.analyze_cv_with_api(cv_file)
+        if cv_analysis_result is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El archivo no es un CV válido o no se pudo analizar"
             )
         
         # Guardar el archivo CV
@@ -48,6 +93,7 @@ class UserService:
             genero=candidato.genero,
             fecha_nacimiento=candidato.fecha_nacimiento,
             cv_filename=cv_filename,
+            cv_analizado=cv_analysis_result,  # NUEVO: Guardar análisis del CV
             profile_picture=profile_picture_filename,
             descripcion=None,  # NULL para candidatos
             verified=False  # Los candidatos no necesitan verificación
@@ -85,7 +131,8 @@ class UserService:
             apellido=None,
             genero=None,
             fecha_nacimiento=None,
-            cv_filename=None
+            cv_filename=None,
+            cv_analizado=None  # NULL para empresas
         )
         self.db.add(db_user)
         self.db.commit()
@@ -119,6 +166,7 @@ class UserService:
             genero=None,
             fecha_nacimiento=None,
             cv_filename=None,
+            cv_analizado=None,  # NULL para admins
             descripcion=None
         )
         self.db.add(db_user)
@@ -136,16 +184,25 @@ class UserService:
         
         update_data = user_update.dict(exclude_unset=True)
         
-        # Si se proporciona un nuevo CV, guardarlo (solo para candidatos)
+        # Si se proporciona un nuevo CV, guardarlo y analizarlo (solo para candidatos)
         if cv_file and db_user.role == UserRoleEnum.candidato:
+            # NUEVO: Analizar nuevo CV
+            cv_analysis_result = self.analyze_cv_with_api(cv_file)
+            if cv_analysis_result is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="El archivo no es un CV válido o no se pudo analizar"
+                )
+            
             # Eliminar el CV anterior si existe
             if db_user.cv_filename:
                 old_cv_path = os.path.join("uploaded_cvs", db_user.cv_filename)
                 if os.path.exists(old_cv_path):
                     os.remove(old_cv_path)
             
-            # Guardar el nuevo CV
+            # Guardar el nuevo CV y análisis
             update_data["cv_filename"] = self.save_cv_file(cv_file)
+            update_data["cv_analizado"] = cv_analysis_result  # NUEVO
         
         # Si se proporciona una nueva foto de perfil, guardarla (para todos los roles)
         if profile_picture:
@@ -382,3 +439,9 @@ class UserService:
         ).first()
         
         return relation is not None
+
+    def get_all_candidates(self, skip: int = 0, limit: int = 100) -> List[User]:
+        """Obtener todos los usuarios candidatos con sus datos completos"""
+        return self.db.query(User).filter(
+            User.role == UserRoleEnum.candidato
+        ).offset(skip).limit(limit).all()
