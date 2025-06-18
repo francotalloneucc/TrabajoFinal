@@ -1,354 +1,788 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap');
+
 .my-user-container {
-    max-width: 600px;
-    margin: 40px auto;
+  max-width: 1200px; /* Aumentado de 600px a 1200px */
+  margin: 20px auto;
+  padding: 32px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  font-family: 'Manrope', sans-serif;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  /* ✅ REMOVIDO: min-height para que se ajuste al contenido */
+}
+
+/* Header mejorado */
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.profile-title-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-title-section h2 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.badge {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-recruiter {
+  background-color: #007bff;
+  color: white;
+}
+
+.badge-admin {
+  background-color: #dc3545;
+  color: white;
+}
+
+.logout-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background-color: #c82333;
+  transform: translateY(-1px);
+}
+
+/* Layout principal mejorado */
+.profile-content {
+  display: grid;
+  grid-template-columns: 300px 1fr; /* Foto fija a la izquierda, contenido flexible */
+  gap: 40px;
+  margin-bottom: 32px;
+}
+
+/* Sección de foto mejorada */
+.profile-photo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-image-wrapper {
+  width: 200px;
+  height: 200px;
+  border: 4px solid #A32930;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.profile-image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.empty-photo {
+  font-size: 1rem;
+  color: #999;
+  text-align: center;
+  padding: 30px;
+  font-weight: 500;
+}
+
+.profile-image-wrapper.editable:hover {
+  border-color: #871e25;
+  transform: scale(1.02);
+}
+
+.edit-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(163, 41, 48, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 50%;
+  font-weight: 600;
+}
+
+.profile-image-wrapper.editable:hover .edit-overlay {
+  opacity: 1;
+}
+
+/* Switch mejorado */
+.switch-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #f8f9fa;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+  width: fit-content;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 32px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+input:checked + .slider {
+  background-color: #A32930;
+}
+
+input:checked + .slider:before {
+  transform: translateX(28px);
+}
+
+.switch-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+/* Datos de usuario mejorados */
+.profile-data-section {
+  background-color: #ffffff;
+}
+
+.verification-status {
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.status-card {
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 2px solid;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-verified {
+  background-color: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+.status-pending {
+  background-color: #fff3cd;
+  color: #856404;
+  border-color: #ffeaa7;
+}
+
+.user-data {
+  background-color: #f8f9fa;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.user-data-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.data-field {
+  background-color: white;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.data-field strong {
+  display: block;
+  color: #666;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.data-field span {
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+}
+
+/* Formulario de edición mejorado */
+.form-edit {
+  background-color: #f8f9fa;
+  padding: 24px;
+  border-radius: 12px;
+  border: 2px solid #A32930;
+}
+
+.form-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.form-edit label {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-edit input, 
+.form-edit select, 
+.form-edit textarea {
+  margin-top: 8px;
+  padding: 12px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.form-edit input:focus, 
+.form-edit select:focus, 
+.form-edit textarea:focus {
+  outline: none;
+  border-color: #A32930;
+  box-shadow: 0 0 0 3px rgba(163, 41, 48, 0.1);
+}
+
+/* CV Section mejorada */
+.cv-section {
+  margin-top: 32px;
+  background-color: #f8f9fa;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.cv-section > p {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.cv-card {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.cv-card:hover {
+  border-color: #A32930;
+  box-shadow: 0 4px 16px rgba(163, 41, 48, 0.15);
+  transform: translateY(-2px);
+}
+
+.cv-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.cv-icon {
+  font-size: 32px;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #A32930, #871e25);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+
+.cv-details {
+  flex: 1;
+}
+
+.cv-name {
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+.cv-filename {
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+  background: #f8f9fa;
+  padding: 6px 12px;
+  border-radius: 8px;
+  display: inline-block;
+  font-family: 'Courier New', monospace;
+  border: 1px solid #e9ecef;
+}
+
+.cv-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.cv-btn {
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cv-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.download-btn {
+  background-color: white;
+  color: #333;
+  border: 2px solid #e9ecef;
+}
+
+.download-btn:hover {
+  background-color: #A32930;
+  border-color: #A32930;
+  color: white;
+}
+
+.upload-btn {
+  background-color: #6c757d;
+  color: white;
+  border: 2px solid #6c757d;
+}
+
+.upload-btn:hover {
+  background-color: #545b62;
+  border-color: #545b62;
+}
+
+/* Secciones expandibles mejoradas */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 20px 24px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  margin-bottom: 16px;
+  font-weight: 600;
+  user-select: none;
+}
+
+.section-header:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.section-header .expand-icon {
+  font-size: 20px;
+  transition: transform 0.3s ease;
+}
+
+.admin-header {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: white;
+}
+
+.company-header {
+  background: linear-gradient(135deg, #A32930, #871e25);
+  color: white;
+}
+
+.recruiter-header {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+}
+
+/* Contenido de secciones */
+.section-content {
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e9ecef;
+}
+
+/* Cards mejoradas */
+.info-card {
+  background-color: white;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+
+.info-card:hover {
+  border-color: #A32930;
+  box-shadow: 0 4px 12px rgba(163, 41, 48, 0.1);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.card-title {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.card-subtitle {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.card-description {
+  margin: 8px 0 0 0;
+  color: #777;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.card-meta {
+  margin: 8px 0 0 0;
+  color: #999;
+  font-size: 12px;
+}
+
+/* Botones mejorados */
+.btn {
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+  background-color: #A32930;
+  color: white;
+  border: 2px solid #A32930;
+}
+
+.btn-primary:hover {
+  background-color: #871e25;
+  border-color: #871e25;
+}
+
+.btn-secondary {
+  background-color: white;
+  color: #333;
+  border: 2px solid #e9ecef;
+}
+
+.btn-secondary:hover {
+  background-color: #f8f9fa;
+  border-color: #A32930;
+  color: #A32930;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+  border: 2px solid #28a745;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+  border-color: #218838;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+  border: 2px solid #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+  border-color: #c82333;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 11px;
+}
+
+/* Form de agregar recruiter mejorado */
+.recruiter-add-section {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 2px solid #e9ecef;
+}
+
+.recruiter-add-title {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.recruiter-add-form {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.recruiter-email-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.recruiter-email-input:focus {
+  outline: none;
+  border-color: #A32930;
+  box-shadow: 0 0 0 3px rgba(163, 41, 48, 0.1);
+}
+
+/* Botones de acción principales */
+.edit-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 2px solid #f0f0f0;
+}
+
+.edit-buttons button {
+  background-color: #A32930;
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.edit-buttons button:hover {
+  background-color: #871e25;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(163, 41, 48, 0.3);
+}
+
+.edit-buttons button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Estados de carga */
+.loading-state {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
+}
+
+.error-state {
+  text-align: center;
+  color: #dc3545;
+  padding: 20px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 12px;
+  margin: 20px 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .my-user-container {
+    max-width: 100%;
+    margin: 10px;
     padding: 24px;
-    background-color: #f9f9f9;
-    border-radius: 12px;
-    font-family: 'Manrope', sans-serif;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .profile-content {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .profile-photo-section {
+    order: -1;
+  }
+  
+  .user-data-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-edit-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .my-user-container {
+    margin: 0;
+    padding: 16px;
+    border-radius: 0;
+  }
+  
+  .profile-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .profile-title-section {
+    flex-direction: column;
+    gap: 12px;
   }
   
   .profile-image-wrapper {
     width: 150px;
     height: 150px;
-    border: 3px solid #a32930;
-    border-radius: 50%;
-    overflow: hidden;
-    margin: 0 auto 20px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fff;
-    position: relative; /* Para el overlay */
-  }
-  
-  .profile-image-wrapper img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  
-  .empty-photo {
-    font-size: 0.9rem;
-    color: #999;
-    text-align: center;
-    padding: 20px;
-  }
-
-  .profile-image-wrapper.editable {
-    border-color: #a32930;
-  }
-
-  .profile-image-wrapper.editable:hover {
-    border-color: #871e25;
-    transform: scale(1.02);
-    transition: all 0.3s ease;
-  }
-
-  .edit-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(163, 41, 48, 0.8);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    border-radius: 50%;
-    font-weight: 600;
-  }
-
-  .profile-image-wrapper.editable:hover .edit-overlay {
-    opacity: 1;
-  }
-
-  .profile-image-wrapper.editable .empty-photo {
-    color: #a32930;
-    font-weight: 600;
-  }
-  
-  .switch-section {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 24px;
-    gap: 10px;
-  }
-  
-  .switch {
-    position: relative;
-    display: inline-block;
-    width: 50px;
-    height: 28px;
-  }
-  
-  .switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-  
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0; left: 0;
-    right: 0; bottom: 0;
-    background-color: #ccc;
-    transition: 0.4s;
-    border-radius: 34px;
-  }
-  
-  .slider:before {
-    position: absolute;
-    content: "";
-    height: 22px;
-    width: 22px;
-    left: 4px;
-    bottom: 3px;
-    background-color: white;
-    transition: 0.4s;
-    border-radius: 50%;
-  }
-  
-  input:checked + .slider {
-    background-color: #a32930;
-  }
-  
-  input:checked + .slider:before {
-    transform: translateX(22px);
-  }
-  
-  .switch-label {
-    font-weight: 600;
-    color: #333;
-  }
-  
-  .user-data p {
-    margin: 6px 0;
-  }
-  
-  .form-edit label {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 10px;
-  }
-  
-  .form-edit input, .form-edit select {
-    padding: 6px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-  }
-  
-  .cv-section {
-    margin-top: 24px;
-    text-align: left;
   }
   
   .cv-card {
-    background: white;
-    border: 2px solid #e0e0e0;
-    border-radius: 12px;
-    padding: 16px;
-    margin-top: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .cv-card:hover {
-    border-color: #a32930;
-    box-shadow: 0 4px 12px rgba(163, 41, 48, 0.15);
-  }
-  
-  .cv-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex: 1;
-  }
-  
-  .cv-icon {
-    font-size: 24px;
-    width: 40px;
-    height: 40px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #e0e0e0;
-  }
-  
-  .cv-details {
-    flex: 1;
-  }
-  
-  .cv-name {
-    font-weight: 600;
-    color: #333;
-    margin: 0 0 4px 0;
-    font-size: 14px;
-  }
-  
-  .cv-filename {
-    margin: 0;
-    font-size: 12px;
-    color: #666;
-    background: #f8f9fa;
-    padding: 4px 8px;
-    border-radius: 6px;
-    display: inline-block;
-    font-family: 'Courier New', monospace;
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
   }
   
   .cv-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
+    justify-content: center;
   }
   
-  .cv-btn {
-    border: none;
-    padding: 8px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  
-  .cv-btn:hover {
-    transform: translateY(-1px);
-  }
-  
-  /* Botón de descarga - CAMBIADO A BLANCO */
-  .download-btn {
-    background-color: white;
-    color: #333;
-    border: 2px solid #e0e0e0;
-  }
-  
-  .download-btn:hover {
-    background-color: #f8f9fa;
-    border-color: #a32930;
-    color: #a32930;
-  }
-  
-  .upload-btn {
-    background-color: #6c757d;
-    color: white;
-  }
-  
-  .upload-btn:hover {
-    background-color: #545b62;
+  .recruiter-add-form {
+    flex-direction: column;
   }
   
   .edit-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    margin-top: 20px;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-title-section h2 {
+    font-size: 1.5rem;
   }
   
-  .edit-buttons button {
-    background-color: #a32930;
-    color: white;
-    border: none;
-    padding: 8px 14px;
-    margin: 0 10px;
-    border-radius: 6px;
-    cursor: pointer;
+  .section-header {
+    padding: 16px;
   }
-
-  /* Estilos para secciones más sobrios */
-  .recruiter-add-section {
-    margin-bottom: 20px;
-    padding: 15px;
-    background-color: white;
-    border-radius: 6px;
-    border: 1px solid #e0e0e0;
+  
+  .section-content {
+    padding: 16px;
   }
-
-  .recruiter-add-title {
-    margin-top: 0;
-    color: #333;
-    font-weight: 600;
+  
+  .info-card {
+    padding: 16px;
   }
-
-  .recruiter-add-form {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
-
-  .recruiter-email-input {
-    flex: 1;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-
-  /* Botón de agregar recruiter - CAMBIADO A BLANCO */
-  .add-recruiter-btn {
-    background-color: white;
-    color: #333;
-    border: 2px solid #e0e0e0;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.3s ease;
-  }
-
-  .add-recruiter-btn:hover {
-    background-color: #f8f9fa;
-    border-color: #a32930;
-    color: #a32930;
-  }
-
-  .add-recruiter-btn:disabled {
-    background-color: #f8f9fa;
-    color: #999;
-    border-color: #e0e0e0;
-    cursor: not-allowed;
-  }
-
-  /* Botones estándar del sistema */
-  .btn-standard {
-    background-color: white;
-    color: #333;
-    border: 2px solid #e0e0e0;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.3s ease;
-  }
-
-  .btn-standard:hover {
-    background-color: #f8f9fa;
-    border-color: #a32930;
-    color: #a32930;
-  }
-
-  .btn-danger {
-    background-color: #dc3545;
-    color: white;
-    border: 2px solid #dc3545;
-  }
-
-  .btn-danger:hover {
-    background-color: #c82333;
-    border-color: #bd2130;
-  }
+}

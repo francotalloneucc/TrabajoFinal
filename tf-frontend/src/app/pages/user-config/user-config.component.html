@@ -1,30 +1,37 @@
 <div class="user-config-form-container">
-    <h2>Registro de Usuario</h2>
+  <!-- Botón para volver al login -->
+  <button type="button" class="btn-back" (click)="goBackToLogin()">
+    ← Volver al Login
+  </button>
   
-    <form (ngSubmit)="onSubmit()" #userForm="ngForm" novalidate>
-  
-      <!-- Selector de tipo de usuario -->
-      <div class="user-type-selector">
-        <p><strong>¿Cómo te quieres registrar?</strong></p>
-        <div class="type-buttons">
-          <button 
-            type="button"
-            class="type-btn"
-            [class.active]="userType === 'candidato'"
-            (click)="onUserTypeChange('candidato')">
-            👤 Candidato
-          </button>
-          <button 
-            type="button"
-            class="type-btn"
-            [class.active]="userType === 'empresa'"
-            (click)="onUserTypeChange('empresa')">
-            🏢 Empresa
-          </button>
-        </div>
-      </div>
+  <h2>Registro de Usuario</h2>
 
-      <!-- Campos comunes -->
+  <form (ngSubmit)="onSubmit()" #userForm="ngForm" novalidate>
+
+    <!-- Selector de tipo de usuario -->
+    <div class="user-type-selector">
+      <p><strong>¿Cómo te quieres registrar?</strong></p>
+      <div class="type-buttons">
+        <button 
+          type="button"
+          class="type-btn"
+          [class.active]="userType === 'candidato'"
+          (click)="onUserTypeChange('candidato')">
+          👤 Candidato
+        </button>
+        <button 
+          type="button"
+          class="type-btn"
+          [class.active]="userType === 'empresa'"
+          (click)="onUserTypeChange('empresa')">
+          🏢 Empresa
+        </button>
+      </div>
+    </div>
+
+    <!-- ⭐ SECCIÓN 1: DATOS PERSONALES/EMPRESARIALES -->
+    <div class="form-grid">
+      <!-- Email (siempre primero) -->
       <div class="form-row">
         <label for="email">Email</label>
         <input
@@ -39,6 +46,49 @@
         </p>
       </div>
 
+      <!-- Nombre -->
+      <div class="form-row">
+        <label for="nombre">Nombre {{ userType === 'empresa' ? 'de la Empresa' : '' }}</label>
+        <input
+          id="nombre"
+          name="nombre"
+          [(ngModel)]="commonData.nombre"
+          required />
+      </div>
+
+      <!-- ⭐ APELLIDO (solo para candidatos, junto al nombre) -->
+      <div class="form-row" *ngIf="userType === 'candidato'">
+        <label for="apellido">Apellido</label>
+        <input
+          id="apellido"
+          name="apellido"
+          [(ngModel)]="candidatoData.apellido"
+          required
+          (keypress)="preventInvalidChars($event)"
+          (input)="sanitizeName('apellido')" />
+        <p class="error" *ngIf="candidatoData.apellido && hasInvalidChars(candidatoData.apellido)">
+          Solo se permiten letras y espacios.
+        </p>
+      </div>
+
+      <!-- ⭐ DESCRIPCIÓN EMPRESA (ancho completo si es empresa) -->
+      <div class="form-row" [class.form-row-full]="userType === 'empresa'" *ngIf="userType === 'empresa'">
+        <label for="descripcion">Descripción de la Empresa</label>
+        <textarea
+          id="descripcion"
+          name="descripcion"
+          [(ngModel)]="empresaData.descripcion"
+          required
+          rows="4"
+          placeholder="Describe tu empresa, servicios, sector, etc."></textarea>
+        <p class="error" *ngIf="!empresaData.descripcion && userForm.submitted">
+          La descripción es requerida.
+        </p>
+      </div>
+    </div>
+
+    <!-- ⭐ SECCIÓN 2: CONTRASEÑAS -->
+    <div class="form-grid">
       <div class="form-row">
         <label for="password">Contraseña</label>
         <input
@@ -65,32 +115,11 @@
           Las contraseñas no coinciden.
         </p>
       </div>
+    </div>
 
-      <div class="form-row">
-        <label for="nombre">Nombre {{ userType === 'empresa' ? 'de la Empresa' : '' }}</label>
-        <input
-          id="nombre"
-          name="nombre"
-          [(ngModel)]="commonData.nombre"
-          required />
-      </div>
-
-      <!-- Campos específicos de CANDIDATOS -->
-      <div *ngIf="userType === 'candidato'">
-        <div class="form-row">
-          <label for="apellido">Apellido</label>
-          <input
-            id="apellido"
-            name="apellido"
-            [(ngModel)]="candidatoData.apellido"
-            required
-            (keypress)="preventInvalidChars($event)"
-            (input)="sanitizeName('apellido')" />
-          <p class="error" *ngIf="candidatoData.apellido && hasInvalidChars(candidatoData.apellido)">
-            Solo se permiten letras y espacios.
-          </p>
-        </div>
-  
+    <!-- ⭐ SECCIÓN 3: DATOS ESPECÍFICOS DE CANDIDATOS -->
+    <div *ngIf="userType === 'candidato'">
+      <div class="form-grid">
         <div class="form-row">
           <label for="gender">Género</label>
           <select id="gender" name="gender" [(ngModel)]="candidatoData.gender" required>
@@ -100,7 +129,7 @@
             <option value="otro">Otro</option>
           </select>
         </div>
-  
+
         <div class="form-row">
           <label for="birthDate">Fecha de Nacimiento</label>
           <input
@@ -113,8 +142,8 @@
           <p class="error" *ngIf="birthDateError">Debés tener al menos 18 años.</p>
         </div>
 
-        <!-- Foto de perfil (opcional) - MOVIDO AQUÍ -->
-        <div class="form-row">
+        <!-- Foto de perfil (candidatos) -->
+        <div class="form-row form-row-full">
           <label for="profile_picture">Foto de Perfil (Opcional)</label>
           <input 
             type="file" 
@@ -123,91 +152,77 @@
             (change)="onProfilePictureSelected($event)" />
           <small class="form-text">Formatos permitidos: JPG, PNG, GIF</small>
         </div>
-  
-        <!-- CV con validación IA - ACTUALIZADO -->
-        <div class="form-row">
-          <label for="cv">Cargar CV (PDF) *</label>
-          <input
-            type="file"
-            id="cv"
-            name="cv"
-            (change)="onFileSelected($event)"
-            accept="application/pdf"
-            [disabled]="cvAnalyzing"
-            required />
+      </div>
+
+      <!-- CV con validación IA - Ancho completo -->
+      <div class="form-row form-row-full">
+        <label for="cv">Cargar CV (PDF) *</label>
+        <input
+          type="file"
+          id="cv"
+          name="cv"
+          (change)="onFileSelected($event)"
+          accept="application/pdf"
+          [disabled]="cvAnalyzing"
+          required />
+        
+        <!-- Estado de validación del CV -->
+        <div class="cv-validation-status" *ngIf="candidatoData.cv || cvAnalyzing">
           
-          <!-- Estado de validación del CV - ACTUALIZADO -->
-          <div class="cv-validation-status" *ngIf="candidatoData.cv || cvAnalyzing">
-            
-            <!-- Analizando - TEXTO SIMPLIFICADO -->
-            <div *ngIf="cvAnalyzing" class="validation-message analyzing">
-              <div class="spinner"></div>
-              Analizando CV...
-            </div>
-            
-            <!-- CV válido -->
-            <div *ngIf="cvValid && !cvAnalyzing" class="validation-message valid">
-              {{ cvValidationMessage }}
-              <button type="button" (click)="removeCv()" class="btn-remove">✕</button>
-            </div>
-            
-            <!-- CV inválido -->
-            <div *ngIf="!cvValid && !cvAnalyzing && cvValidationMessage" class="validation-message invalid">
-              {{ cvValidationMessage }}
-              <button type="button" (click)="removeCv()" class="btn-remove">✕</button>
-            </div>
-            
+          <!-- Analizando -->
+          <div *ngIf="cvAnalyzing" class="validation-message analyzing">
+            <div class="spinner"></div>
+            Analizando CV...
           </div>
           
-          <!-- Información del archivo seleccionado -->
-          <div *ngIf="candidatoData.cv && cvValid" class="file-info">
-            📄 <strong>{{ candidatoData.cv.name }}</strong> ({{ (candidatoData.cv.size / 1024 / 1024).toFixed(2) }} MB)
+          <!-- CV válido -->
+          <div *ngIf="cvValid && !cvAnalyzing" class="validation-message valid">
+            {{ cvValidationMessage }}
+            <button type="button" (click)="removeCv()" class="btn-remove">✕</button>
           </div>
-
-          <p class="error" *ngIf="cvError">Solo se permite un archivo PDF.</p>
+          
+          <!-- CV inválido -->
+          <div *ngIf="!cvValid && !cvAnalyzing && cvValidationMessage" class="validation-message invalid">
+            {{ cvValidationMessage }}
+            <button type="button" (click)="removeCv()" class="btn-remove">✕</button>
+          </div>
+          
         </div>
-      </div>
-
-      <!-- Campos específicos de EMPRESAS -->
-      <div *ngIf="userType === 'empresa'">
-        <!-- Foto de perfil (opcional) - TAMBIÉN PARA EMPRESAS -->
-        <div class="form-row">
-          <label for="profile_picture_empresa">Foto de Perfil (Opcional)</label>
-          <input 
-            type="file" 
-            id="profile_picture_empresa" 
-            accept="image/*"
-            (change)="onProfilePictureSelected($event)" />
-          <small class="form-text">Formatos permitidos: JPG, PNG, GIF</small>
+        
+        <!-- Información del archivo seleccionado -->
+        <div *ngIf="candidatoData.cv && cvValid" class="file-info">
+          📄 <strong>{{ candidatoData.cv.name }}</strong> ({{ (candidatoData.cv.size / 1024 / 1024).toFixed(2) }} MB)
         </div>
 
-        <div class="form-row">
-          <label for="descripcion">Descripción de la Empresa</label>
-          <textarea
-            id="descripcion"
-            name="descripcion"
-            [(ngModel)]="empresaData.descripcion"
-            required
-            rows="4"
-            placeholder="Describe tu empresa, servicios, sector, etc."></textarea>
-          <p class="error" *ngIf="!empresaData.descripcion && userForm.submitted">
-            La descripción es requerida.
-          </p>
-        </div>
+        <p class="error" *ngIf="cvError">Solo se permite un archivo PDF.</p>
       </div>
-  
-      <!-- Botón de registro - ACTUALIZADO -->
-      <button
-        type="submit"
-        [disabled]="!isFormValid() || loading">
-        <span *ngIf="loading">Registrando...</span>
-        <span *ngIf="!loading && userType === 'candidato' && cvAnalyzing">Analizando CV...</span>
-        <span *ngIf="!loading && !cvAnalyzing">Registrarse</span>
-      </button>
+    </div>
 
-      <!-- Mostrar mensaje de error si existe -->
-      <div *ngIf="errorMessage" class="error" style="text-align: center; margin-top: 15px; font-weight: 600;">
-        {{ errorMessage }}
+    <!-- ⭐ SECCIÓN 4: FOTO DE PERFIL PARA EMPRESAS -->
+    <div *ngIf="userType === 'empresa'">
+      <div class="form-row form-row-full">
+        <label for="profile_picture_empresa">Foto de Perfil (Opcional)</label>
+        <input 
+          type="file" 
+          id="profile_picture_empresa" 
+          accept="image/*"
+          (change)="onProfilePictureSelected($event)" />
+        <small class="form-text">Formatos permitidos: JPG, PNG, GIF</small>
       </div>
-    </form>
-  </div>
+    </div>
+
+    <!-- Botón de registro -->
+    <button
+      type="submit"
+      [disabled]="!isFormValid() || loading">
+      <span *ngIf="loading">Registrando...</span>
+      <span *ngIf="!loading && userType === 'candidato' && cvAnalyzing">Analizando CV...</span>
+      <span *ngIf="!loading && !cvAnalyzing">Registrarse</span>
+    </button>
+
+    <!-- Mostrar mensaje de error si existe -->
+    <div *ngIf="errorMessage" class="error" style="text-align: center; margin-top: 15px; font-weight: 600;">
+      {{ errorMessage }}
+    </div>
+  </form>
+</div>

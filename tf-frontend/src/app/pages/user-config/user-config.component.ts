@@ -249,7 +249,7 @@ export class UserConfigComponent {
     }
   }
 
-  // ACTUALIZADO: Registro de candidato con foto de perfil
+  // ⭐ ACTUALIZADO: Registro de candidato - NAVEGACIÓN CORREGIDA
   private registerCandidato(): void {
     const candidatoData: CandidatoRequest = {
       email: this.commonData.email,
@@ -265,10 +265,15 @@ export class UserConfigComponent {
 
     this.authService.registerCandidato(candidatoData, this.candidatoData.cv!, this.profilePicture || undefined).subscribe({
       next: (response: any) => {
-        console.log('✅ Candidato registrado exitosamente:', response);
-        console.log('🧠 CV analizado y guardado:', response.cv_analizado);
-        alert('¡Candidato registrado exitosamente! Tu CV ha sido analizado y guardado.');
-        this.router.navigate(['/login']);
+        console.log('✅ Registro temporal exitoso:', response);
+        
+        // ⭐ MENSAJE ACTUALIZADO
+        alert('¡Registro iniciado exitosamente! Revisa tu email para verificar tu cuenta.');
+        
+        // ⭐ NAVEGACIÓN ACTUALIZADA - Con queryParams del email
+        this.router.navigate(['/verify-account'], {
+          queryParams: { email: this.commonData.email }
+        });
       },
       error: (error: any) => {
         this.handleError(error);
@@ -279,7 +284,12 @@ export class UserConfigComponent {
     });
   }
 
-  // ACTUALIZADO: Registro de empresa con foto de perfil
+  // Navegar de vuelta al login
+  goBackToLogin(): void {
+    this.router.navigate(['/login']);
+  }
+
+  // ⭐ ACTUALIZADO: Registro de empresa - También navega a verify-account
   private registerEmpresa(): void {
     const empresaData: EmpresaRequest = {
       email: this.commonData.email,
@@ -291,8 +301,14 @@ export class UserConfigComponent {
     this.authService.registerEmpresa(empresaData, this.profilePicture || undefined).subscribe({
       next: (response: any) => {
         console.log('✅ Empresa registrada exitosamente:', response);
-        alert('¡Empresa registrada exitosamente! Esperando verificación de Polo52.');
-        this.router.navigate(['/login']);
+        
+        // ⭐ MENSAJE ACTUALIZADO para empresas
+        alert('¡Empresa registrada exitosamente! Revisa tu email para verificar tu cuenta. También esperarás verificación de Polo52.');
+        
+        // ⭐ NAVEGACIÓN ACTUALIZADA - También va a verify-account
+        this.router.navigate(['/verify-account'], {
+          queryParams: { email: this.commonData.email }
+        });
       },
       error: (error: any) => {
         this.handleError(error);

@@ -44,6 +44,10 @@ class User(Base):
     recruiting_for = relationship("CompanyRecruiter", foreign_keys="CompanyRecruiter.recruiter_id", back_populates="recruiter")
     company_recruiters = relationship("CompanyRecruiter", foreign_keys="CompanyRecruiter.company_id", back_populates="company")
 
+    email_verified = Column(Boolean, default=False, nullable=False)
+    verification_code = Column(String(6), nullable=True)  # Código de 6 dígitos
+    verification_expires = Column(DateTime, nullable=True)
+
 class CompanyRecruiter(Base):
     __tablename__ = "company_recruiters"
     

@@ -13,8 +13,8 @@ from models import User, GenderEnum, UserRoleEnum
 router = APIRouter()
 security = HTTPBearer()
 
-# Endpoint para registro de candidatos
-@router.post("/register-candidato", response_model=UserResponse)
+# ⭐ ENDPOINT ACTUALIZADO - Registro temporal de candidatos
+@router.post("/register-candidato", response_model=dict)
 async def register_candidato(
     email: str = Form(...),
     password: str = Form(...),
@@ -26,6 +26,7 @@ async def register_candidato(
     profile_picture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
+    """Registra candidato temporalmente - requiere verificación de email"""
     candidato_create = CandidatoCreate(
         email=email,
         password=password,
@@ -36,10 +37,12 @@ async def register_candidato(
     )
     
     user_service = UserService(db)
-    return user_service.create_candidato(candidato_create, cv_file, profile_picture)
+    # Usar el nuevo método que NO guarda en DB hasta verificar
+    result = user_service.create_pending_candidato(candidato_create, cv_file, profile_picture)
+    return result
 
-# Endpoint para registro de empresas
-@router.post("/register-empresa", response_model=UserResponse)
+# ⭐ ENDPOINT ACTUALIZADO - Registro temporal de empresas
+@router.post("/register-empresa", response_model=dict)
 async def register_empresa(
     email: str = Form(...),
     password: str = Form(...),
@@ -48,6 +51,7 @@ async def register_empresa(
     profile_picture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
+    """Registra empresa temporalmente - requiere verificación de email"""
     empresa_create = EmpresaCreate(
         email=email,
         password=password,
@@ -56,10 +60,68 @@ async def register_empresa(
     )
     
     user_service = UserService(db)
-    return user_service.create_empresa(empresa_create, profile_picture)
+    # Usar el nuevo método temporal para empresas
+    result = user_service.create_empresa(empresa_create, profile_picture)
+    return result
 
-# Mantener endpoint de registro antiguo para compatibilidad (será candidato por defecto)
-@router.post("/register", response_model=UserResponse)
+# ⭐ ENDPOINT UNIFICADO - Completar cualquier tipo de registro
+@router.post("/complete-registration", response_model=UserResponse)
+async def complete_registration(
+    email: str = Form(...),
+    verification_code: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Completa el registro después de verificar el email (candidato o empresa)"""
+    user_service = UserService(db)
+    
+    # Obtener datos temporales para determinar el tipo
+    temp_data = user_service.temp_storage.get_pending_registration(email)
+    if not temp_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No se encontraron datos de registro pendientes para este email"
+        )
+    
+    user_type = temp_data["registration_data"].get("user_type")
+    
+    if user_type == "candidato":
+        user = user_service.complete_candidato_registration(email, verification_code)
+    elif user_type == "empresa":
+        user = user_service.complete_empresa_registration(email, verification_code)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tipo de usuario no válido en los datos temporales"
+        )
+    
+    return user
+
+# ⭐ ENDPOINT ESPECÍFICO - Completar registro de candidato
+@router.post("/complete-candidato-registration", response_model=UserResponse)
+async def complete_candidato_registration(
+    email: str = Form(...),
+    verification_code: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Completa el registro del candidato después de verificar el email"""
+    user_service = UserService(db)
+    user = user_service.complete_candidato_registration(email, verification_code)
+    return user
+
+# ⭐ ENDPOINT ESPECÍFICO - Completar registro de empresa
+@router.post("/complete-empresa-registration", response_model=UserResponse)
+async def complete_empresa_registration(
+    email: str = Form(...),
+    verification_code: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Completa el registro de empresa después de verificar el email"""
+    user_service = UserService(db)
+    user = user_service.complete_empresa_registration(email, verification_code)
+    return user
+
+# ⭐ ENDPOINT OBSOLETO - DESHABILITADO
+@router.post("/register", response_model=dict)
 async def register_user(
     email: str = Form(...),
     password: str = Form(...),
@@ -71,29 +133,68 @@ async def register_user(
     profile_picture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
-    candidato_create = CandidatoCreate(
-        email=email,
-        password=password,
-        nombre=nombre,
-        apellido=apellido,
-        genero=genero,
-        fecha_nacimiento=fecha_nacimiento
+    """DESHABILITADO: Usar /register-candidato + /complete-registration"""
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail="Este endpoint está deshabilitado. Usar /register-candidato seguido de /complete-registration"
     )
-    
-    user_service = UserService(db)
-    return user_service.create_candidato(candidato_create, cv_file, profile_picture)
 
-# Endpoint para login
+# ⭐ ENDPOINT ACTUALIZADO - Verificar email (funciona con storage temporal)
+@router.post("/verify-email")
+async def verify_email(
+    email: str = Form(...),
+    code: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Verifica código de email (solo validación, no completa registro)"""
+    user_service = UserService(db)
+    success = user_service.verify_email_code(email, code)
+    
+    if success:
+        return {"message": "Código verificado correctamente", "success": True}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Código inválido o expirado"
+        )
+
+# Endpoint para reenviar código de verificación
+@router.post("/resend-verification")
+async def resend_verification(
+    email: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    user_service = UserService(db)
+    success = user_service.resend_verification_code(email)
+    
+    if success:
+        return {"message": "Código reenviado exitosamente", "success": True}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No se pudo reenviar el código. Verifica que tengas un registro pendiente."
+        )
+
+# ⭐ ENDPOINT ACTUALIZADO - Login con validación de email verificado
 @router.post("/login", response_model=Token)
 async def login_user(user_login: UserLogin, db: Session = Depends(get_db)):
     user_service = UserService(db)
     user = user_service.authenticate_user(user_login.email, user_login.password)
+    
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email o contraseña incorrectos",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    # ⭐ NUEVO: Verificar que el email esté verificado
+    if not user.email_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Debes verificar tu email antes de iniciar sesión. Revisa tu bandeja de entrada.",
+        )
+    
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires

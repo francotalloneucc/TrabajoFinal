@@ -9,3 +9,4 @@ python-dotenv==1.0.0
 pydantic==2.5.0
 alembic==1.13.1
 email-validator==2.1.0
+secure-smtplib==0.1.1

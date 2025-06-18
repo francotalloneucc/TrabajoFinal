@@ -273,15 +273,15 @@ export class AuthService {
     );
   }
 
-    // Agregar este método en tu AuthService
-getAllCandidates(skip: number = 0, limit: number = 100): Observable<User[]> {
-  const token = this.getToken();
-  return this.http.get<User[]>(`${this.baseUrl}/admin/candidates?skip=${skip}&limit=${limit}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  });
-}
+  // Obtener todos los candidatos
+  getAllCandidates(skip: number = 0, limit: number = 100): Observable<User[]> {
+    const token = this.getToken();
+    return this.http.get<User[]>(`${this.baseUrl}/admin/candidates?skip=${skip}&limit=${limit}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+  }
 
   // Obtener todos los usuarios (solo admins)
   getAllUsers(skip: number = 0, limit: number = 100): Observable<User[]> {
@@ -292,5 +292,31 @@ getAllCandidates(skip: number = 0, limit: number = 100): Observable<User[]> {
       }
     });
   }
-}
 
+  // ⭐ NUEVOS MÉTODOS para verificación de email - CORREGIDOS
+  // Completar registro después de verificar email
+  completeRegistration(email: string, verificationCode: string): Observable<any> {
+    const formData = new FormData();
+    formData.append('email', email);
+    formData.append('verification_code', verificationCode);
+    
+    return this.http.post(`${this.baseUrl}/complete-registration`, formData);
+  }
+
+  // Verificar solo el código (sin completar registro)
+  verifyEmail(email: string, code: string): Observable<any> {
+    const formData = new FormData();
+    formData.append('email', email);
+    formData.append('code', code);
+    
+    return this.http.post(`${this.baseUrl}/verify-email`, formData);
+  }
+
+  // Reenviar código de verificación
+  resendVerificationCode(email: string): Observable<any> {
+    const formData = new FormData();
+    formData.append('email', email);
+    
+    return this.http.post(`${this.baseUrl}/resend-verification`, formData);
+  }
+}

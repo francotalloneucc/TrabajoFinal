@@ -1,375 +1,429 @@
 <div class="my-user-container">
-    <!-- Loading state -->
-    <div *ngIf="loading" style="text-align: center; padding: 40px;">
-      <p>Cargando datos del usuario...</p>
+  <!-- Loading state -->
+  <div *ngIf="loading" class="loading-state">
+    <p>Cargando datos del usuario...</p>
+  </div>
+
+  <!-- Error state -->
+  <div *ngIf="errorMessage && !loading" class="error-state">
+    <p>{{ errorMessage }}</p>
+    <button (click)="loadUserData()" class="btn btn-primary">Reintentar</button>
+  </div>
+
+  <!-- User data -->
+  <div *ngIf="user && !loading">
+    <!-- Header mejorado -->
+    <div class="profile-header">
+      <div class="profile-title-section">
+        <h2>Perfil de {{ user.role === 'candidato' ? 'Candidato' : user.role === 'empresa' ? 'Empresa' : 'Administrador' }}</h2>
+        <!-- Badge de recruiter para candidatos -->
+        <div *ngIf="user.role === 'candidato' && isRecruiter()" class="badge badge-recruiter">
+          👨‍💼 RECRUITER
+        </div>
+        <!-- Badge de admin -->
+        <div *ngIf="user.role === 'admin'" class="badge badge-admin">
+          🛡️ ADMIN
+        </div>
+      </div>
+      <button (click)="logout()" class="logout-btn">
+        Cerrar Sesión
+      </button>
     </div>
 
-    <!-- Error state -->
-    <div *ngIf="errorMessage && !loading" style="text-align: center; color: #a32930; padding: 20px;">
-      <p>{{ errorMessage }}</p>
-      <button (click)="loadUserData()" style="margin-top: 10px;">Reintentar</button>
-    </div>
-
-    <!-- User data -->
-    <div *ngIf="user && !loading">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <div style="display: flex; align-items: center; gap: 15px;">
-          <h2>Perfil de {{ user.role === 'candidato' ? 'Candidato' : user.role === 'empresa' ? 'Empresa' : 'Administrador' }}</h2>
-          <!-- Badge de recruiter para candidatos -->
-          <div *ngIf="user.role === 'candidato' && isRecruiter()" 
-               style="background-color: #007bff; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">
-            👨‍💼 RECRUITER
-          </div>
-          <!-- Badge de admin -->
-          <div *ngIf="user.role === 'admin'" 
-               style="background-color: #dc3545; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">
-            🛡️ ADMIN
-          </div>
-        </div>
-        <button (click)="logout()" style="background-color: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
-          Cerrar Sesión
-        </button>
-      </div>
-    
-      <!-- Foto de perfil -->
-      <div class="profile-image-wrapper" 
-           [class.editable]="isEditing" 
-           [style.cursor]="isEditing ? 'pointer' : 'default'"
-           (click)="isEditing ? triggerFileInput() : null">
-        <img *ngIf="profileImageUrl; else placeholder" [src]="profileImageUrl" alt="Foto de perfil" />
-        <ng-template #placeholder>
-          <div class="empty-photo">
-            {{ isEditing ? 'Click para agregar foto' : 'Sin foto' }}
-          </div>
-        </ng-template>
-        <!-- Mostrar indicador de que se puede editar -->
-        <div *ngIf="isEditing" class="edit-overlay">
-          <span style="font-size: 24px;">📷</span>
-          <small style="display: block; margin-top: 4px;">Cambiar foto</small>
-        </div>
-        <input type="file" (change)="onPhotoSelected($event)" accept="image/*" #photoInput hidden />
-      </div>
-    
-      <!-- Switch solo para candidatos -->
-      <div class="switch-section" *ngIf="user.role === 'candidato'">
-        <label class="switch">
-          <input type="checkbox" [checked]="isLookingForJob" (change)="toggleJobStatus()" />
-          <span class="slider round"></span>
-        </label>
-        <span class="switch-label">Buscando trabajo</span>
-      </div>
-
-      <!-- Estado de verificación para empresas -->
-      <div class="verification-status" *ngIf="user.role === 'empresa'" style="margin-bottom: 20px; text-align: center;">
-        <div *ngIf="user.verified" style="background-color: #d4edda; color: #155724; padding: 10px; border-radius: 6px; border: 1px solid #c3e6cb;">
-          ✅ <strong>Empresa Verificada</strong> - Puedes agregar recruiters
-        </div>
-        <div *ngIf="!user.verified" style="background-color: #fff3cd; color: #856404; padding: 10px; border-radius: 6px; border: 1px solid #ffeaa7;">
-          ⏳ <strong>Verificación Pendiente</strong> - Esperando aprobación de Polo52
-        </div>
-      </div>
-    
-      <div class="user-data">
-        <div *ngIf="!isEditing">
-          <!-- Datos comunes para ambos roles -->
-          <p><strong>Email:</strong> {{ user.email }}</p>
-          <p><strong>Nombre:</strong> {{ user.nombre }}</p>
-          
-          <!-- Datos específicos de CANDIDATOS -->
-          <div *ngIf="user.role === 'candidato'">
-            <p><strong>Apellido:</strong> {{ user.apellido }}</p>
-            <p><strong>Género:</strong> {{ getGenderDisplay(user.genero) }}</p>
-            <p><strong>Fecha de nacimiento:</strong> {{ user.fecha_nacimiento }}</p>
-          </div>
-          
-          <!-- Datos específicos de EMPRESAS -->
-          <div *ngIf="user.role === 'empresa'">
-            <p><strong>Descripción:</strong> {{ user.descripcion }}</p>
-            <p><strong>Estado:</strong> 
-              <span [style.color]="user.verified ? '#28a745' : '#ffc107'">
-                {{ user.verified ? 'Verificada' : 'Pendiente de verificación' }}
-              </span>
-            </p>
-          </div>
-
-          <!-- Datos específicos de ADMIN -->
-          <div *ngIf="user.role === 'admin'">
-            <p><strong>Rol:</strong> Administrador del Sistema</p>
-            <p><strong>Permisos:</strong> Verificar empresas, gestionar usuarios</p>
-          </div>
-        </div>
-    
-        <div *ngIf="isEditing" class="form-edit">
-          <!-- Campos comunes -->
-          <label>Nombre: <input [(ngModel)]="tempUser.nombre" /></label>
-          
-          <!-- Campos específicos de CANDIDATOS -->
-          <div *ngIf="user.role === 'candidato'">
-            <label>Apellido: <input [(ngModel)]="tempUser.apellido" /></label>
-            <label>Género: 
-              <select [(ngModel)]="tempUser.genero">
-                <option value="masculino">Masculino</option>
-                <option value="femenino">Femenino</option>
-                <option value="otro">Otro</option>
-              </select>
-            </label>
-            <label>Fecha de nacimiento: <input type="date" [(ngModel)]="tempUser.fecha_nacimiento" /></label>
-          </div>
-          
-          <!-- Campos específicos de EMPRESAS -->
-          <div *ngIf="user.role === 'empresa'">
-            <label>Descripción: 
-              <textarea [(ngModel)]="tempUser.descripcion" rows="4" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
-            </label>
-          </div>
-        </div>
-      </div>
-    
-      <!-- CV Section - Solo para candidatos -->
-      <div class="cv-section" *ngIf="user.role === 'candidato'">
-        <p><strong>Currículum:</strong></p>
-        
-        <div class="cv-card">
-          <div class="cv-info">
-            <div class="cv-icon">
-              📄
+    <!-- Layout principal mejorado -->
+    <div class="profile-content">
+      <!-- Sección de foto -->
+      <div class="profile-photo-section">
+        <div class="profile-image-wrapper" 
+             [class.editable]="isEditing" 
+             (click)="isEditing ? triggerFileInput() : null">
+          <img *ngIf="profileImageUrl; else placeholder" [src]="profileImageUrl" alt="Foto de perfil" />
+          <ng-template #placeholder>
+            <div class="empty-photo">
+              {{ isEditing ? 'Click para agregar foto' : 'Sin foto' }}
             </div>
-            <div class="cv-details">
-              <p class="cv-name">Curriculum Vitae</p>
-              <p class="cv-filename">{{ tempCvFile ? tempCvFile.name : getDisplayCvName() }}</p>
-            </div>
+          </ng-template>
+          <!-- Mostrar indicador de que se puede editar -->
+          <div *ngIf="isEditing" class="edit-overlay">
+            <span style="font-size: 32px;">📷</span>
+            <small style="display: block; margin-top: 8px;">Cambiar foto</small>
           </div>
-          
-          <div class="cv-actions">
-            <!-- Botón de descarga - CAMBIADO A BLANCO -->
-            <button class="cv-btn download-btn" (click)="downloadCV()" title="Descargar CV">
-              ⬇️ Descargar
-            </button>
-            <button *ngIf="isEditing" class="cv-btn upload-btn" (click)="triggerCvUpload()">
-              📎 Cambiar CV
-            </button>
-          </div>
+          <input type="file" (change)="onPhotoSelected($event)" accept="image/*" #photoInput hidden />
         </div>
-        
-        <input type="file" accept="application/pdf" #cvInput (change)="onCvSelected($event)" hidden />
+
+        <!-- Switch solo para candidatos -->
+        <div class="switch-section" *ngIf="user.role === 'candidato'">
+          <label class="switch">
+            <input type="checkbox" [checked]="isLookingForJob" (change)="toggleJobStatus()" />
+            <span class="slider"></span>
+          </label>
+          <span class="switch-label">Buscando trabajo</span>
+        </div>
       </div>
 
-      <!-- Sección Admin - Solo para administradores -->
-      <div class="admin-section" *ngIf="user.role === 'admin'" style="margin-top: 30px;">
-        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; background-color: #dc3545; color: white; padding: 12px; border-radius: 6px;" (click)="toggleAdminPanel()">
-          <h3 style="margin: 0; color: white;">🛡️ Panel de Administración</h3>
-          <span style="font-size: 18px; transition: transform 0.3s ease;" [style.transform]="showAdminPanel ? 'rotate(180deg)' : 'rotate(0deg)'">▼</span>
-        </div>
-        
-        <div *ngIf="showAdminPanel" style="margin-top: 15px; padding: 15px; background-color: #f9f9f9; border-radius: 6px;">
-          
-          <!-- Empresas pendientes de verificación -->
-          <div style="margin-bottom: 20px; padding: 15px; background-color: white; border-radius: 6px; border: 1px solid #e0e0e0;">
-            <h4 style="margin-top: 0; color: #dc3545;">⏳ Empresas Pendientes de Verificación ({{ pendingCompanies.length }})</h4>
-            
-            <!-- Botón para recargar -->
-            <button (click)="loadPendingCompanies()" 
-                    style="background-color: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-bottom: 15px; font-size: 12px;">
-              🔄 Actualizar Lista
-            </button>
-            
-            <div *ngIf="loadingPendingCompanies" style="text-align: center; padding: 20px; color: #666;">
-              Cargando empresas pendientes...
-            </div>
-
-            <div *ngIf="!loadingPendingCompanies && pendingCompanies.length === 0" style="text-align: center; padding: 20px; color: #666;">
-              ✅ No hay empresas pendientes de verificación.
-            </div>
-
-            <div *ngFor="let company of pendingCompanies" style="background-color: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 10px;">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="flex: 1;">
-                  <h4 style="margin: 0 0 5px 0; color: #333;">{{ company.nombre }}</h4>
-                  <p style="margin: 0; color: #666; font-size: 14px;">📧 {{ company.email }}</p>
-                  <p style="margin: 5px 0 0 0; color: #777; font-size: 13px;" *ngIf="company.descripcion">{{ company.descripcion }}</p>
-                  <p style="margin: 5px 0 0 0; color: #999; font-size: 12px;">Registrada: {{ company.created_at | date:'short' }}</p>
-                </div>
-                <button 
-                  (click)="verifyCompany(company.email)"
-                  [disabled]="verifyingCompany === company.email"
-                  style="background-color: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; margin-left: 15px;">
-                  {{ verifyingCompany === company.email ? '⏳ Verificando...' : '✅ Verificar' }}
-                </button>
+      <!-- Sección de datos -->
+      <div class="profile-data-section">
+        <!-- Estado de verificación para empresas -->
+        <div class="verification-status" *ngIf="user.role === 'empresa'">
+          <div class="status-card" [ngClass]="user.verified ? 'status-verified' : 'status-pending'">
+            <span>{{ user.verified ? '✅' : '⏳' }}</span>
+            <div>
+              <strong>{{ user.verified ? 'Empresa Verificada' : 'Verificación Pendiente' }}</strong>
+              <div style="font-size: 12px; margin-top: 4px; opacity: 0.8;">
+                {{ user.verified ? 'Puedes agregar recruiters' : 'Esperando aprobación de Polo52' }}
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Sección Ver Candidatos - NUEVA -->
-          <div style="margin-top: 20px; padding: 15px; background-color: white; border-radius: 6px; border: 1px solid #e0e0e0;">
-            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 8px 0;" (click)="toggleCandidates()">
-              <h4 style="margin: 0; color: #28a745;">👥 Ver Todos los Candidatos ({{ candidates.length }})</h4>
-              <span style="font-size: 16px; transition: transform 0.3s ease;" [style.transform]="showCandidates ? 'rotate(180deg)' : 'rotate(0deg)'">▼</span>
-            </div>
-            
-            <div *ngIf="showCandidates" style="margin-top: 15px;">
+        <div class="user-data">
+          <div *ngIf="!isEditing">
+            <div class="user-data-grid">
+              <!-- Datos comunes -->
+              <div class="data-field">
+                <strong>Email</strong>
+                <span>{{ user.email }}</span>
+              </div>
+              <div class="data-field">
+                <strong>Nombre</strong>
+                <span>{{ user.nombre }}</span>
+              </div>
               
-              <div *ngIf="loadingCandidates" style="text-align: center; padding: 20px; color: #666;">
-                Cargando candidatos...
+              <!-- Datos específicos de CANDIDATOS -->
+              <div *ngIf="user.role === 'candidato'" class="data-field">
+                <strong>Apellido</strong>
+                <span>{{ user.apellido }}</span>
+              </div>
+              <div *ngIf="user.role === 'candidato'" class="data-field">
+                <strong>Género</strong>
+                <span>{{ getGenderDisplay(user.genero) }}</span>
+              </div>
+              <div *ngIf="user.role === 'candidato'" class="data-field">
+                <strong>Fecha de nacimiento</strong>
+                <span>{{ user.fecha_nacimiento | date:'longDate' }}</span>
+              </div>
+              
+              <!-- Datos específicos de EMPRESAS -->
+              <div *ngIf="user.role === 'empresa'" class="data-field" style="grid-column: 1 / -1;">
+                <strong>Descripción</strong>
+                <span>{{ user.descripcion }}</span>
+              </div>
+              <div *ngIf="user.role === 'empresa'" class="data-field">
+                <strong>Estado</strong>
+                <span [style.color]="user.verified ? '#28a745' : '#ffc107'">
+                  {{ user.verified ? 'Verificada' : 'Pendiente de verificación' }}
+                </span>
               </div>
 
-              <div *ngIf="!loadingCandidates && candidates.length === 0" style="text-align: center; padding: 20px; color: #666;">
-                No hay candidatos registrados.
+              <!-- Datos específicos de ADMIN -->
+              <div *ngIf="user.role === 'admin'" class="data-field">
+                <strong>Rol</strong>
+                <span>Administrador del Sistema</span>
               </div>
+              <div *ngIf="user.role === 'admin'" class="data-field">
+                <strong>Permisos</strong>
+                <span>Verificar empresas, gestionar usuarios</span>
+              </div>
+            </div>
+          </div>
 
-              <div *ngFor="let candidate of candidates" style="background-color: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 15px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div *ngIf="isEditing" class="form-edit">
+            <div class="form-edit-grid">
+              <!-- Campos comunes -->
+              <label>
+                <strong>Nombre</strong>
+                <input [(ngModel)]="tempUser.nombre" />
+              </label>
+              
+              <!-- Campos específicos de CANDIDATOS -->
+              <label *ngIf="user.role === 'candidato'">
+                <strong>Apellido</strong>
+                <input [(ngModel)]="tempUser.apellido" />
+              </label>
+              <label *ngIf="user.role === 'candidato'">
+                <strong>Género</strong>
+                <select [(ngModel)]="tempUser.genero">
+                  <option value="masculino">Masculino</option>
+                  <option value="femenino">Femenino</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </label>
+              <label *ngIf="user.role === 'candidato'">
+                <strong>Fecha de nacimiento</strong>
+                <input type="date" [(ngModel)]="tempUser.fecha_nacimiento" />
+              </label>
+              
+              <!-- Campos específicos de EMPRESAS -->
+              <label *ngIf="user.role === 'empresa'" style="grid-column: 1 / -1;">
+                <strong>Descripción</strong>
+                <textarea [(ngModel)]="tempUser.descripcion" rows="4"></textarea>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CV Section - Solo para candidatos -->
+    <div class="cv-section" *ngIf="user.role === 'candidato'">
+      <p><strong>Currículum Vitae</strong></p>
+      
+      <div class="cv-card">
+        <div class="cv-info">
+          <div class="cv-icon">
+            📄
+          </div>
+          <div class="cv-details">
+            <p class="cv-name">{{ tempCvFile ? 'Nuevo CV seleccionado' : 'Curriculum Vitae' }}</p>
+            <p class="cv-filename">{{ tempCvFile ? tempCvFile.name : getDisplayCvName() }}</p>
+          </div>
+        </div>
+        
+        <div class="cv-actions">
+          <button class="cv-btn download-btn" (click)="downloadCV()" title="Descargar CV">
+            ⬇️ Descargar
+          </button>
+          <button *ngIf="isEditing" class="cv-btn upload-btn" (click)="triggerCvUpload()">
+            📎 Cambiar CV
+          </button>
+        </div>
+      </div>
+      
+      <input type="file" accept="application/pdf" #cvInput (change)="onCvSelected($event)" hidden />
+    </div>
+
+    <!-- Sección Admin - Solo para administradores -->
+    <div class="admin-section" *ngIf="user.role === 'admin'" style="margin-top: 40px;">
+      <div class="section-header admin-header" (click)="toggleAdminPanel()">
+        <h3>🛡️ Panel de Administración</h3>
+        <span class="expand-icon" [style.transform]="showAdminPanel ? 'rotate(180deg)' : 'rotate(0deg)'">▼</span>
+      </div>
+      
+      <div *ngIf="showAdminPanel" class="section-content">
+        
+        <!-- Empresas pendientes de verificación -->
+        <div class="info-card">
+          <h4 style="margin: 0 0 16px 0; color: #dc3545; display: flex; align-items: center; gap: 8px;">
+            <span>⏳</span>
+            <span>Empresas Pendientes de Verificación ({{ pendingCompanies.length }})</span>
+          </h4>
+          
+          <button (click)="loadPendingCompanies()" class="btn btn-secondary btn-sm" style="margin-bottom: 16px;">
+            🔄 Actualizar Lista
+          </button>
+          
+          <div *ngIf="loadingPendingCompanies" class="loading-state">
+            Cargando empresas pendientes...
+          </div>
+
+          <div *ngIf="!loadingPendingCompanies && pendingCompanies.length === 0" class="loading-state">
+            ✅ No hay empresas pendientes de verificación.
+          </div>
+
+          <div *ngFor="let company of pendingCompanies" class="info-card">
+            <div class="card-header">
+              <div style="flex: 1;">
+                <h4 class="card-title">{{ company.nombre }}</h4>
+                <p class="card-subtitle">📧 {{ company.email }}</p>
+                <p class="card-description" *ngIf="company.descripcion">{{ company.descripcion }}</p>
+                <p class="card-meta">Registrada: {{ company.created_at | date:'short' }}</p>
+              </div>
+              <button 
+                (click)="verifyCompany(company.email)"
+                [disabled]="verifyingCompany === company.email"
+                class="btn btn-success">
+                {{ verifyingCompany === company.email ? '⏳ Verificando...' : '✅ Verificar' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección Ver Candidatos -->
+        <div class="info-card">
+          <div class="card-header" style="cursor: pointer;" (click)="toggleCandidates()">
+            <h4 style="margin: 0; color: #28a745; display: flex; align-items: center; gap: 8px;">
+              <span>👥</span>
+              <span>Ver Todos los Candidatos ({{ candidates.length }})</span>
+            </h4>
+            <span class="expand-icon" [style.transform]="showCandidates ? 'rotate(180deg)' : 'rotate(0deg)'">▼</span>
+          </div>
+          
+          <div *ngIf="showCandidates" style="margin-top: 16px;">
+            
+            <div *ngIf="loadingCandidates" class="loading-state">
+              Cargando candidatos...
+            </div>
+
+            <div *ngIf="!loadingCandidates && candidates.length === 0" class="loading-state">
+              No hay candidatos registrados.
+            </div>
+
+            <div *ngFor="let candidate of candidates" class="info-card">
+              <div class="card-header">
+                
+                <!-- Información del candidato -->
+                <div style="flex: 1;">
+                  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <!-- Foto de perfil -->
+                    <div style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; border: 2px solid #e9ecef;">
+                      <img *ngIf="candidate.profile_picture" 
+                           [src]="'http://localhost:8000/profile_pictures/' + candidate.profile_picture" 
+                           style="width: 100%; height: 100%; object-fit: cover;" 
+                           alt="Foto de perfil">
+                      <span *ngIf="!candidate.profile_picture" style="font-size: 20px; color: #999;">👤</span>
+                    </div>
+                    
+                    <div>
+                      <h4 class="card-title">{{ candidate.nombre }} {{ candidate.apellido }}</h4>
+                      <p class="card-subtitle">📧 {{ candidate.email }}</p>
+                    </div>
+                  </div>
                   
-                  <!-- Información del candidato -->
-                  <div style="flex: 1;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                      <!-- Foto de perfil -->
-                      <div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background-color: #ddd; display: flex; align-items: center; justify-content: center;">
-                        <img *ngIf="candidate.profile_picture" 
-                             [src]="'http://localhost:8000/profile_pictures/' + candidate.profile_picture" 
-                             style="width: 100%; height: 100%; object-fit: cover;" 
-                             alt="Foto de perfil">
-                        <span *ngIf="!candidate.profile_picture" style="font-size: 12px; color: #666;">👤</span>
-                      </div>
-                      
-                      <div>
-                        <h4 style="margin: 0; color: #333;">{{ candidate.nombre }} {{ candidate.apellido }}</h4>
-                        <p style="margin: 0; color: #666; font-size: 13px;">📧 {{ candidate.email }}</p>
-                      </div>
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-bottom: 12px;">
+                    <div class="data-field" style="padding: 8px 12px;">
+                      <strong>Género</strong>
+                      <span>{{ candidate.genero }}</span>
                     </div>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; color: #777;">
-                      <p style="margin: 0;"><strong>Género:</strong> {{ candidate.genero }}</p>
-                      <p style="margin: 0;"><strong>Fecha nac.:</strong> {{ candidate.fecha_nacimiento | date:'shortDate' }}</p>
-                      <p style="margin: 0;"><strong>Registrado:</strong> {{ candidate.created_at | date:'short' }}</p>
-                      <p style="margin: 0;"><strong>CV:</strong> {{ candidate.cv_filename ? 'Disponible' : 'No disponible' }}</p>
+                    <div class="data-field" style="padding: 8px 12px;">
+                      <strong>Fecha nac.</strong>
+                      <span>{{ candidate.fecha_nacimiento | date:'shortDate' }}</span>
                     </div>
-                    
-                    <!-- Indicador de CV analizado -->
-                    <div style="margin-top: 8px;">
-                      <span *ngIf="candidate.cv_analizado" 
-                            style="background-color: #d4edda; color: #155724; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
-                        🧠 CV ANALIZADO
-                      </span>
-                      <span *ngIf="!candidate.cv_analizado" 
-                            style="background-color: #fff3cd; color: #856404; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
-                        ⚠️ SIN ANÁLISIS
-                      </span>
+                    <div class="data-field" style="padding: 8px 12px;">
+                      <strong>Registrado</strong>
+                      <span>{{ candidate.created_at | date:'short' }}</span>
+                    </div>
+                    <div class="data-field" style="padding: 8px 12px;">
+                      <strong>CV</strong>
+                      <span>{{ candidate.cv_filename ? 'Disponible' : 'No disponible' }}</span>
                     </div>
                   </div>
+                  
+                  <!-- Indicador de CV analizado -->
+                  <div>
+                    <span *ngIf="candidate.cv_analizado" class="badge" style="background-color: #d4edda; color: #155724;">
+                      🧠 CV ANALIZADO
+                    </span>
+                    <span *ngIf="!candidate.cv_analizado" class="badge" style="background-color: #fff3cd; color: #856404;">
+                      ⚠️ SIN ANÁLISIS
+                    </span>
+                  </div>
+                </div>
 
-                  <!-- Acciones -->
-                  <div style="display: flex; flex-direction: column; gap: 6px; margin-left: 15px;">
-                    <button 
-                      *ngIf="candidate.cv_analizado"
-                      (click)="viewCvAnalysis(candidate)"
-                      style="background-color: #007bff; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; white-space: nowrap;">
-                      🧠 Ver Análisis
-                    </button>
-                    
-                    <button 
-                      *ngIf="candidate.cv_filename"
-                      (click)="downloadCandidateCV(candidate)"
-                      style="background-color: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; white-space: nowrap;">
-                      ⬇️ Descargar CV
-                    </button>
-                    
-                    <button 
-                      style="background-color: #6c757d; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; white-space: nowrap;">
-                      👁️ Ver Perfil
-                    </button>
-                  </div>
+                <!-- Acciones -->
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                  <button 
+                    *ngIf="candidate.cv_analizado"
+                    (click)="viewCvAnalysis(candidate)"
+                    class="btn btn-primary btn-sm">
+                    🧠 Ver Análisis
+                  </button>
+                  
+                  <button 
+                    *ngIf="candidate.cv_filename"
+                    (click)="downloadCandidateCV(candidate)"
+                    class="btn btn-success btn-sm">
+                    ⬇️ Descargar CV
+                  </button>
+                  
+                  <button class="btn btn-secondary btn-sm">
+                    👁️ Ver Perfil
+                  </button>
                 </div>
               </div>
             </div>
           </div>
-
         </div>
+
       </div>
+    </div>
 
-      <!-- Sección Mis Recruiters - Solo para empresas verificadas -->
-      <div class="recruiters-section" *ngIf="user.role === 'empresa' && user.verified" style="margin-top: 30px;">
-        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; background-color: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e0e0e0;" (click)="toggleRecruiters()">
-          <h3 style="margin: 0; color: #333;">👥 Mis Recruiters ({{ recruiters.length }})</h3>
-          <span style="font-size: 18px; transition: transform 0.3s ease;" [style.transform]="showRecruiters ? 'rotate(180deg)' : 'rotate(0deg)'">▼</span>
+    <!-- Sección Mis Recruiters - Solo para empresas verificadas -->
+    <div class="recruiters-section" *ngIf="user.role === 'empresa' && user.verified" style="margin-top: 40px;">
+      <div class="section-header company-header" (click)="toggleRecruiters()">
+        <h3>👥 Mis Recruiters ({{ recruiters.length }})</h3>
+        <span class="expand-icon" [style.transform]="showRecruiters ? 'rotate(180deg)' : 'rotate(0deg)'">▼</span>
+      </div>
+      
+      <div *ngIf="showRecruiters" class="section-content">
+        <!-- Agregar nuevo recruiter -->
+        <div class="recruiter-add-section">
+          <h4 class="recruiter-add-title">➕ Agregar Recruiter</h4>
+          <div class="recruiter-add-form">
+            <input 
+              type="email" 
+              [(ngModel)]="newRecruiterEmail" 
+              placeholder="Email del candidato"
+              class="recruiter-email-input">
+            <button 
+              (click)="addRecruiter()" 
+              [disabled]="!newRecruiterEmail.trim()"
+              class="btn btn-primary">
+              Agregar
+            </button>
+          </div>
         </div>
-        
-        <div *ngIf="showRecruiters" style="margin-top: 15px; padding: 15px; background-color: #f9f9f9; border-radius: 6px;">
-          <!-- Agregar nuevo recruiter - ACTUALIZADO -->
-          <div class="recruiter-add-section">
-            <h4 class="recruiter-add-title">➕ Agregar Recruiter</h4>
-            <div class="recruiter-add-form">
-              <input 
-                type="email" 
-                [(ngModel)]="newRecruiterEmail" 
-                placeholder="Email del candidato"
-                class="recruiter-email-input">
-              <button 
-                (click)="addRecruiter()" 
-                [disabled]="!newRecruiterEmail.trim()"
-                class="add-recruiter-btn">
-                Agregar
-              </button>
+
+        <!-- Lista de recruiters -->
+        <div *ngIf="loadingRecruiters" class="loading-state">
+          Cargando recruiters...
+        </div>
+
+        <div *ngIf="!loadingRecruiters && recruiters.length === 0" class="loading-state">
+          No tienes recruiters asignados aún.
+        </div>
+
+        <div *ngFor="let recruiter of recruiters" class="info-card">
+          <div class="card-header">
+            <div>
+              <h4 class="card-title">{{ recruiter.nombre }} {{ recruiter.apellido }}</h4>
+              <p class="card-subtitle">📧 {{ recruiter.email }}</p>
+              <p class="card-meta">Asignado: {{ recruiter.assigned_at | date:'short' }}</p>
             </div>
-          </div>
-
-          <!-- Lista de recruiters -->
-          <div *ngIf="loadingRecruiters" style="text-align: center; padding: 20px; color: #666;">
-            Cargando recruiters...
-          </div>
-
-          <div *ngIf="!loadingRecruiters && recruiters.length === 0" style="text-align: center; padding: 20px; color: #666;">
-            No tienes recruiters asignados aún.
-          </div>
-
-          <div *ngFor="let recruiter of recruiters" style="background-color: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 10px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <h4 style="margin: 0 0 5px 0; color: #333;">{{ recruiter.nombre }} {{ recruiter.apellido }}</h4>
-                <p style="margin: 0; color: #666; font-size: 14px;">📧 {{ recruiter.email }}</p>
-                <p style="margin: 5px 0 0 0; color: #999; font-size: 12px;">Asignado: {{ recruiter.assigned_at | date:'short' }}</p>
-              </div>
-              <button 
-                (click)="removeRecruiter(recruiter.email)"
-                class="btn-danger"
-                style="padding: 6px 12px; font-size: 12px;">
-                Remover
-              </button>
-            </div>
+            <button 
+              (click)="removeRecruiter(recruiter.email)"
+              class="btn btn-danger">
+              Remover
+            </button>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Sección Reclutando Para - Solo para candidatos que son recruiters -->
-      <div class="recruiting-for-section" *ngIf="user.role === 'candidato' && isRecruiter()" style="margin-top: 30px;">
-        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; background-color: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e0e0e0;" (click)="toggleRecruitingFor()">
-          <h3 style="margin: 0; color: #333;">🏢 Reclutando Para ({{ recruitingCompanies.length }})</h3>
-          <span style="font-size: 18px; transition: transform 0.3s ease;" [style.transform]="showRecruitingFor ? 'rotate(180deg)' : 'rotate(0deg)'">▼</span>
-        </div>
-        
-        <div *ngIf="showRecruitingFor" style="margin-top: 15px; padding: 15px; background-color: #f9f9f9; border-radius: 6px;">
-          <div *ngFor="let company of recruitingCompanies" style="background-color: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 10px;">
-            <!-- REMOVIDO: Badge de verificada ya que es obvio -->
-            <h4 style="margin: 0 0 5px 0; color: #333;">{{ company.nombre }}</h4>
-            <p style="margin: 0; color: #666; font-size: 14px;">📧 {{ company.email }}</p>
-            <p style="margin: 5px 0 0 0; color: #777; font-size: 13px;">{{ company.descripcion }}</p>
-            <p style="margin: 5px 0 0 0; color: #999; font-size: 12px;">Asignado como recruiter: {{ company.assigned_at | date:'short' }}</p>
-          </div>
+    <!-- Sección Reclutando Para - Solo para candidatos que son recruiters -->
+    <div class="recruiting-for-section" *ngIf="user.role === 'candidato' && isRecruiter()" style="margin-top: 40px;">
+      <div class="section-header recruiter-header" (click)="toggleRecruitingFor()">
+        <h3>🏢 Reclutando Para ({{ recruitingCompanies.length }})</h3>
+        <span class="expand-icon" [style.transform]="showRecruitingFor ? 'rotate(180deg)' : 'rotate(0deg)'">▼</span>
+      </div>
+      
+      <div *ngIf="showRecruitingFor" class="section-content">
+        <div *ngFor="let company of recruitingCompanies" class="info-card">
+          <h4 class="card-title">{{ company.nombre }}</h4>
+          <p class="card-subtitle">📧 {{ company.email }}</p>
+          <p class="card-description">{{ company.descripcion }}</p>
+          <p class="card-meta">Asignado como recruiter: {{ company.assigned_at | date:'short' }}</p>
         </div>
       </div>
+    </div>
 
-      <!-- Mostrar mensaje de error si existe -->
-      <div *ngIf="errorMessage && !loading" style="color: #a32930; text-align: center; margin: 15px 0; font-weight: 600;">
-        {{ errorMessage }}
-      </div>
-    
-      <div class="edit-buttons">
-        <button *ngIf="!isEditing && user.role !== 'admin'" (click)="enableEdit()">Editar</button>
-        <div *ngIf="isEditing">
-          <button (click)="saveChanges()" [disabled]="saving">
-            {{ saving ? 'Guardando...' : 'Guardar Cambios' }}
-          </button>
-          <button (click)="discardChanges()" [disabled]="saving">Descartar Cambios</button>
-        </div>
+    <!-- Mostrar mensaje de error si existe -->
+    <div *ngIf="errorMessage && !loading" class="error-state">
+      {{ errorMessage }}
+    </div>
+
+    <!-- Botones de edición -->
+    <div class="edit-buttons">
+      <button *ngIf="!isEditing && user.role !== 'admin'" (click)="enableEdit()" class="btn btn-primary">
+        ✏️ Editar Perfil
+      </button>
+      <div *ngIf="isEditing" style="display: flex; gap: 16px;">
+        <button (click)="saveChanges()" [disabled]="saving" class="btn btn-success">
+          {{ saving ? '💾 Guardando...' : '💾 Guardar Cambios' }}
+        </button>
+        <button (click)="discardChanges()" [disabled]="saving" class="btn btn-secondary">
+          ❌ Descartar Cambios
+        </button>
       </div>
     </div>
   </div>
+</div>
